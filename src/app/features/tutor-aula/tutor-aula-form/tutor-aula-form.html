@@ -1,0 +1,95 @@
+<h2 mat-dialog-title>Asignar Tutor a Sección</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="formulario-modal">
+    @if (backendError()) {
+      <div class="mensaje-error-backend">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ backendError() }}</span>
+      </div>
+    }
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>ID Usuario Tutor</mat-label>
+      <input matInput type="number" formControlName="usuarioId" placeholder="Ej. 1045" />
+      <mat-icon matPrefix>badge</mat-icon>
+      @if (form.get('usuarioId')?.hasError('required')) {
+        <mat-error>El ID del tutor es obligatorio</mat-error>
+      }
+      @if (form.get('usuarioId')?.hasError('min')) {
+        <mat-error>Debe ingresar un ID válido</mat-error>
+      }
+      @if (errorBackend('usuarioId')) {
+        <mat-error>{{ errorBackend('usuarioId') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="fila-dos-columnas">
+      <mat-form-field appearance="outline">
+        <mat-label>Nivel Educativo</mat-label>
+        <mat-select formControlName="nivel">
+          @for (n of niveles; track n) {
+            <mat-option [value]="n">{{ n }}</mat-option>
+          }
+        </mat-select>
+        @if (form.get('nivel')?.hasError('required')) {
+          <mat-error>El nivel es obligatorio</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Año Escolar</mat-label>
+        <input matInput type="number" formControlName="anioEscolar" min="2000" max="2100" />
+        @if (form.get('anioEscolar')?.hasError('required')) {
+          <mat-error>El año es obligatorio</mat-error>
+        }
+        @if (form.get('anioEscolar')?.hasError('min') || form.get('anioEscolar')?.hasError('max')) {
+          <mat-error>Año entre 2000 y 2100</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="fila-dos-columnas">
+      <mat-form-field appearance="outline">
+        <mat-label>Grado</mat-label>
+        <input matInput formControlName="grado" placeholder="Ej. 1, 2, Primero" maxlength="20" />
+        @if (form.get('grado')?.hasError('required')) {
+          <mat-error>El grado es obligatorio</mat-error>
+        }
+        @if (form.get('grado')?.hasError('maxlength')) {
+          <mat-error>Máximo 20 caracteres</mat-error>
+        }
+        @if (errorBackend('grado')) {
+          <mat-error>{{ errorBackend('grado') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Sección</mat-label>
+        <input matInput formControlName="seccion" placeholder="Ej. A, B, U" maxlength="10" />
+        @if (form.get('seccion')?.hasError('required')) {
+          <mat-error>La sección es obligatoria</mat-error>
+        }
+        @if (form.get('seccion')?.hasError('maxlength')) {
+          <mat-error>Máximo 10 caracteres</mat-error>
+        }
+        @if (errorBackend('seccion')) {
+          <mat-error>{{ errorBackend('seccion') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancelar()" [disabled]="guardando()">
+    Cancelar
+  </button>
+  <button mat-flat-button color="primary" (click)="guardar()" [disabled]="guardando()">
+    @if (guardando()) {
+      <span>Guardando...</span>
+    } @else {
+      <span>Guardar Asignación</span>
+    }
+  </button>
+</mat-dialog-actions>

@@ -147,7 +147,7 @@ export const routes: Routes = [
       {
         path: 'admin/tutor-aulas',
         canActivate: [roleGuard],
-        loadComponent: placeholder,
+        loadComponent: () => import('./features/tutor-aula/tutor-aula-list/tutor-aula-list').then((m) => m.TutorAulaList),
         data: { titulo: 'Asignación de Aulas a Tutores', roles: ROL_ADMIN },
       },
 
