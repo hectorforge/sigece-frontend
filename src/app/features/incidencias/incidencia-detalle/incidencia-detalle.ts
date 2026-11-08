@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   Observable,
   catchError,
@@ -17,12 +18,15 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
+import Swal from 'sweetalert2';
 
 import { Auth } from '../../../core/auth/auth';
 import { GRAVEDADES } from '../../../core/models/enums';
 import {
-  Adjunto,
-  Involucrado,
+  AdjuntoResponseDto,
+  InvolucradoResponseDto,
+  IncidenteExpedienteResponseDto,
+  ReincidenciaResponseDto,
 } from '../../../core/models/incidente.models';
 import { IncidenteApi } from '../../../core/services/incidente-api';
 import { AccionSeguimientoApi } from '../../../core/services/accion-seguimiento-api';
@@ -44,11 +48,10 @@ import {
 import { EstadoChip } from '../../../shared/estado-chip/estado-chip';
 import { GravedadChip } from '../../../shared/gravedad-chip/gravedad-chip';
 import { MotivoDialog } from '../../../shared/motivo-dialog/motivo-dialog';
-
 import { InvolucradoDialog } from '../involucrado-dialog/involucrado-dialog';
 import { EvidenciaDialog } from '../evidencia-dialog/evidencia-dialog';
+import { AsignarResponsableDialog } from '../asignar-responsable-dialog/asignar-responsable-dialog';
 
-// Utilidades para parsear fechas hacia los tipos de Java (LocalDate y OffsetDateTime)
 function aLocalDateString(valor: Date | string | null | undefined): string | null {
   if (!valor) return null;
   const d = new Date(valor);
@@ -70,6 +73,7 @@ function aOffsetDateTimeString(valor: Date | string | null | undefined): string 
   selector: 'app-incidencia-detalle',
   standalone: true,
   imports: [
+    CommonModule,
     DatePipe,
     RouterLink,
     MatTabsModule,
@@ -77,6 +81,7 @@ function aOffsetDateTimeString(valor: Date | string | null | undefined): string 
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
+    MatTooltipModule,
     GravedadChip,
     EstadoChip,
   ],
@@ -91,15 +96,13 @@ export class IncidenciaDetalle {
   private readonly auth = inject(Auth);
   private readonly alert = inject(AlertService);
 
-  private readonly id = this.route.snapshot.paramMap.get('id')!;
+  readonly id = this.route.snapshot.paramMap.get('id')!;
   private readonly recarga = signal(0);
 
-  // --- Roles RBAC ---
   readonly esAdmin = this.auth.tieneRol(['ROLE_ADMINISTRADOR']);
   readonly esTutor = this.auth.tieneRol(['ROLE_TUTOR']);
   readonly esPsicologo = this.auth.tieneRol(['ROLE_PSICOLOGO']);
 
-  // Permisos según Contratos Backend y Casos de Uso
   readonly puedeModificarIncidente = this.esAdmin || this.esPsicologo;
   readonly puedeGestionarInvolucrados = this.esTutor;
   readonly puedeSubirEvidencia = this.esTutor;
@@ -107,31 +110,24 @@ export class IncidenciaDetalle {
   readonly puedeVerificarIntegridad = this.esAdmin || this.esPsicologo;
   readonly puedeRegistrarSeguimiento = this.esPsicologo;
   readonly puedeVerNotificaciones = this.esAdmin || this.esTutor;
+  readonly puedeAsignarResponsable = this.esAdmin;
 
-  // Involucrados: Exclusivo TUTOR
-  readonly columnasInvolucrados: string[] = this.puedeGestionarInvolucrados
-    ? ['rol', 'nombre', 'documento', 'observaciones', 'acciones']
-    : ['rol', 'nombre', 'documento', 'observaciones'];
-
-  readonly columnasEvidencias: string[] = [
-    'archivo',
-    'tamano',
-    'subido',
+  readonly columnasInvolucrados: string[] = [
+    'rol',
+    'nombre',
+    'documento',
+    'observaciones',
+    'reincidencia',
     'acciones',
   ];
 
-  // Seguimiento: Las acciones de editar estado/reprogramar solo se muestran al PSICÓLOGO
+  readonly columnasEvidencias: string[] = ['archivo', 'tamano', 'subido', 'acciones'];
+
   readonly columnasSeguimiento: string[] = this.esPsicologo
     ? ['fecha', 'tipo', 'descripcion', 'usuario', 'revision', 'estado', 'acciones']
     : ['fecha', 'tipo', 'descripcion', 'usuario', 'revision', 'estado'];
 
-  readonly columnasNotificaciones: string[] = [
-    'tipo',
-    'apoderado',
-    'canal',
-    'envio',
-    'estado',
-  ];
+  readonly columnasNotificaciones: string[] = ['tipo', 'apoderado', 'canal', 'envio', 'estado'];
 
   readonly estado = signal<'cargando' | 'ok' | 'error'>('cargando');
 
@@ -145,15 +141,14 @@ export class IncidenciaDetalle {
     toObservable(this.recarga).pipe(
       switchMap(() =>
         this.api.obtener(this.id).pipe(
-          switchMap((expediente) => {
+          switchMap((expediente: IncidenteExpedienteResponseDto) => {
             if (!expediente) return of(null);
-
             return this.accionesApi.listarPorIncidente(this.id).pipe(
               map((seguimiento: AccionSeguimientoResponseDto[]) => ({
                 ...expediente,
-                seguimiento: seguimiento as any,
+                seguimiento,
               })),
-              catchError(() => of(expediente)),
+              catchError(() => of(expediente))
             );
           }),
           tap((expediente) => {
@@ -162,25 +157,19 @@ export class IncidenciaDetalle {
           catchError(() => {
             this.estado.set('error');
             return of(null);
-          }),
-        ),
-      ),
+          })
+        )
+      )
     ),
-    { initialValue: null },
+    { initialValue: null }
   );
 
   readonly transiciones = toSignal(
     toObservable(this.recarga).pipe(
-      switchMap(() =>
-        this.api.transiciones(this.id).pipe(catchError(() => of([]))),
-      ),
-      map((lista) =>
-        lista.filter(
-          (estado) => estado !== 'RESUELTO' && estado !== 'CERRADO',
-        ),
-      ),
+      switchMap(() => this.api.transiciones(this.id).pipe(catchError(() => of([])))),
+      map((lista) => lista.filter((estado) => estado !== 'RESUELTO' && estado !== 'CERRADO'))
     ),
-    { initialValue: [] },
+    { initialValue: [] }
   );
 
   private refrescar(mensaje: string, detalle = ''): void {
@@ -189,7 +178,82 @@ export class IncidenciaDetalle {
   }
 
   // =========================================================================
-  // 1. INVOLUCRADOS (Solo Tutor)
+  // ASIGNAR / REASIGNAR RESPONSABLE MEDIANTE AUTOCOMPLETE
+  // =========================================================================
+
+  asignarResponsable(esReasignacion = false): void {
+    if (!this.puedeAsignarResponsable) return;
+
+    this.dialog
+      .open(AsignarResponsableDialog, {
+        width: '520px',
+        data: { esReasignacion },
+      })
+      .afterClosed()
+      .pipe(
+        filter(Boolean),
+        switchMap((res: { responsableId: number; motivo?: string }) =>
+          this.api.asignarResponsable(this.id, res)
+        )
+      )
+      .subscribe({
+        next: () =>
+          this.refrescar(
+            esReasignacion ? 'Responsable reasignado' : 'Responsable asignado',
+            esReasignacion
+              ? 'El expediente fue transferido al nuevo responsable correctamente.'
+              : 'El responsable fue asignado e inició la etapa de investigación.'
+          ),
+        error: (err) =>
+          this.alert.error(
+            err?.error?.message ?? err?.message ?? 'No se pudo asignar al responsable.',
+            'Error de asignación'
+          ),
+      });
+  }
+
+  // =========================================================================
+  // EVALUAR REINCIDENCIA
+  // =========================================================================
+
+  evaluarReincidencia(involucrado: InvolucradoResponseDto): void {
+    if (!involucrado.estudianteId) {
+      this.alert.aviso('Solo se puede evaluar reincidencia en estudiantes registrados.', 'Atención');
+      return;
+    }
+
+    this.api.evaluarReincidencia({ estudianteId: involucrado.estudianteId }).subscribe({
+      next: (res: ReincidenciaResponseDto) => {
+        if (res.superaUmbral) {
+          Swal.fire({
+            icon: 'warning',
+            title: '¡Alerta de Reincidencia!',
+            html: `
+              <p>El estudiante <strong>${involucrado.nombreCompleto}</strong> registra <strong>${res.totalIncidentesEnPeriodo}</strong> incidentes en los últimos <strong>${res.periodoDiasEvaluado} días</strong>.</p>
+              <p style="color: #b91c1c; font-weight: bold;">Supera el umbral de alerta (${res.umbralConfigurado} incidentes). Se recomienda atención inmediata del psicólogo.</p>
+            `,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#b91c1c',
+          });
+        } else {
+          Swal.fire({
+            icon: 'info',
+            title: 'Historial de Reincidencia',
+            html: `
+              <p>Estudiante: <strong>${involucrado.nombreCompleto}</strong></p>
+              <p>Incidentes en los últimos 30 días: <strong>${res.totalIncidentesEnPeriodo}</strong> (Umbral: ${res.umbralConfigurado}).</p>
+              <p style="color: #15803d;">Dentro del parámetro normal.</p>
+            `,
+            confirmButtonText: 'Aceptar',
+          });
+        }
+      },
+      error: () => this.alert.error('No se pudo consultar el historial de reincidencia.'),
+    });
+  }
+
+  // =========================================================================
+  // INVOLUCRADOS
   // =========================================================================
 
   agregarInvolucrado(): void {
@@ -200,9 +264,7 @@ export class IncidenciaDetalle {
       .afterClosed()
       .pipe(
         filter(Boolean),
-        switchMap((r: any) =>
-          this.api.agregarInvolucrado(this.id, r.dto, r.nombre),
-        ),
+        switchMap((r: any) => this.api.agregarInvolucrado(this.id, r.dto))
       )
       .subscribe({
         next: () => this.refrescar('Involucrado agregado', 'Se agregó correctamente al expediente.'),
@@ -210,7 +272,7 @@ export class IncidenciaDetalle {
       });
   }
 
-  async retirar(p: Involucrado): Promise<void> {
+  async retirar(p: InvolucradoResponseDto): Promise<void> {
     if (!this.puedeGestionarInvolucrados) return;
 
     const confirmado = await this.alert.confirmarPeligro(
@@ -233,9 +295,7 @@ export class IncidenciaDetalle {
       .afterClosed()
       .pipe(
         filter(Boolean),
-        switchMap((motivo: string) =>
-          this.api.retirarInvolucrado(this.id, p.id, motivo),
-        ),
+        switchMap((motivo: string) => this.api.retirarInvolucrado(this.id, p.id, motivo))
       )
       .subscribe({
         next: () => this.refrescar('Involucrado retirado', `${p.nombreCompleto} fue retirado del caso.`),
@@ -244,7 +304,7 @@ export class IncidenciaDetalle {
   }
 
   // =========================================================================
-  // 2. EVIDENCIAS
+  // EVIDENCIAS
   // =========================================================================
 
   subirEvidencia(): void {
@@ -255,9 +315,7 @@ export class IncidenciaDetalle {
       .afterClosed()
       .pipe(
         filter(Boolean),
-        switchMap((r: any) =>
-          this.api.subirEvidencia(this.id, r.archivo, r.descripcion),
-        ),
+        switchMap((r: any) => this.api.subirEvidencia(this.id, r.archivo, r.descripcion))
       )
       .subscribe({
         next: () => this.refrescar('Evidencia cargada', 'El archivo fue almacenado de manera segura.'),
@@ -269,15 +327,14 @@ export class IncidenciaDetalle {
       });
   }
 
-  descargar(a: Adjunto): void {
+  descargar(a: AdjuntoResponseDto): void {
     this.api.urlDescarga(a.id).subscribe({
       next: (url) => window.open(url, '_blank'),
-      error: (e) =>
-        this.alert.error(e?.message ?? 'No se pudo generar el enlace de descarga.', 'Error de descarga'),
+      error: (e) => this.alert.error(e?.message ?? 'No se pudo generar el enlace de descarga.', 'Error de descarga'),
     });
   }
 
-  verificar(a: Adjunto): void {
+  verificar(a: AdjuntoResponseDto): void {
     if (!this.puedeVerificarIntegridad) return;
 
     this.api.verificarIntegridad(a.id).subscribe({
@@ -298,7 +355,7 @@ export class IncidenciaDetalle {
     });
   }
 
-  async eliminarEvidencia(a: Adjunto): Promise<void> {
+  async eliminarEvidencia(a: AdjuntoResponseDto): Promise<void> {
     if (!this.puedeEliminarEvidencia) return;
 
     const confirmado = await this.alert.confirmarPeligro(
@@ -321,9 +378,7 @@ export class IncidenciaDetalle {
       .afterClosed()
       .pipe(
         filter(Boolean),
-        switchMap((motivo: string) =>
-          this.api.eliminarEvidencia(this.id, a.id, motivo),
-        ),
+        switchMap((motivo: string) => this.api.eliminarEvidencia(a.id, motivo))
       )
       .subscribe({
         next: () => this.refrescar('Evidencia eliminada', 'El archivo fue eliminado del expediente.'),
@@ -332,7 +387,7 @@ export class IncidenciaDetalle {
   }
 
   // =========================================================================
-  // 3. SEGUIMIENTO (CU15 - Exclusivo PSICÓLOGO)
+  // SEGUIMIENTO
   // =========================================================================
 
   registrarAccionSeguimiento(): void {
@@ -388,11 +443,10 @@ export class IncidenciaDetalle {
           fechaProgramada: aOffsetDateTimeString(v.fechaProgramada),
           fechaProximaRevision: aLocalDateString(v.fechaProximaRevision),
         };
-
-        return this.accionesApi.registrar(this.id, requestDto).pipe(map(() => undefined));
+        return this.accionesApi.registrar(this.id, requestDto).pipe(map(() => void 0));
       },
       'Acción registrada',
-      'La acción de seguimiento se guardó en el expediente.',
+      'La acción de seguimiento se guardó en el expediente.'
     );
   }
 
@@ -429,11 +483,10 @@ export class IncidenciaDetalle {
           nuevoEstado: v.nuevoEstado as EstadoAccion,
           comentarioEjecucion: v.comentarioEjecucion?.trim() || undefined,
         };
-
-        return this.accionesApi.actualizarEstado(accion.id, dto).pipe(map(() => undefined));
+        return this.accionesApi.actualizarEstado(accion.id, dto).pipe(map(() => void 0));
       },
       'Estado actualizado',
-      'El estado de la acción fue modificado.',
+      'El estado de la acción fue modificado.'
     );
   }
 
@@ -461,38 +514,35 @@ export class IncidenciaDetalle {
       },
       (v) => {
         const parsedFecha = aLocalDateString(v.nuevaFechaRevision);
-        if (!parsedFecha) {
-          throw new Error('La fecha seleccionada no es válida');
-        }
+        if (!parsedFecha) throw new Error('Fecha no válida');
 
         const dto: AccionRevisionRequestDto = {
           nuevaFechaRevision: parsedFecha,
           justificacion: v.justificacion,
         };
-
-        return this.accionesApi.reprogramarRevision(accion.id, dto).pipe(map(() => undefined));
+        return this.accionesApi.reprogramarRevision(accion.id, dto).pipe(map(() => void 0));
       },
       'Revisión reprogramada',
-      'Se actualizó la fecha de seguimiento.',
+      'Se actualizó la fecha de seguimiento.'
     );
   }
 
   // =========================================================================
-  // 4. ACCIONES SOBRE EL EXPEDIENTE DEL CASO
+  // TRANSICIONES Y CIERRE
   // =========================================================================
 
   private abrir(
     data: AccionData,
     llamada: (v: any) => Observable<void>,
     tituloExito: string,
-    detalleExito = '',
+    detalleExito = ''
   ): void {
     this.dialog
       .open(AccionDialog, { data, width: '520px' })
       .afterClosed()
       .pipe(
         filter(Boolean),
-        switchMap(llamada),
+        switchMap(llamada)
       )
       .subscribe({
         next: () => this.refrescar(tituloExito, detalleExito),
@@ -507,7 +557,7 @@ export class IncidenciaDetalle {
   cambiarEstado(): void {
     this.abrir(
       {
-        titulo: 'Cambiar estado',
+        titulo: 'Cambiar estado del incidente',
         confirmar: 'Cambiar estado',
         campos: [
           {
@@ -528,9 +578,9 @@ export class IncidenciaDetalle {
           },
         ],
       },
-      (v) => this.api.cambiarEstado(this.id, v.nuevoEstado, v.motivo),
+      (v) => this.api.cambiarEstado(this.id, v.nuevoEstado, v.motivo).pipe(map(() => void 0)),
       'Estado actualizado',
-      'La incidencia cambió de estado correctamente.',
+      'El incidente cambió de estado correctamente.'
     );
   }
 
@@ -559,9 +609,9 @@ export class IncidenciaDetalle {
           },
         ],
       },
-      (v) => this.api.clasificarGravedad(this.id, v.gravedad, v.justificacion),
+      (v) => this.api.clasificarGravedad(this.id, v.gravedad, v.justificacion).pipe(map(() => void 0)),
       'Gravedad actualizada',
-      'Se modificó el nivel de gravedad del incidente.',
+      'Se modificó el nivel de gravedad del incidente.'
     );
   }
 
@@ -587,9 +637,9 @@ export class IncidenciaDetalle {
           },
         ],
       },
-      (v) => this.api.resolver(this.id, v.observaciones || undefined),
+      (v) => this.api.resolver(this.id, v.observaciones || undefined).pipe(map(() => void 0)),
       'Caso resuelto',
-      'El incidente se encuentra marcado como resuelto.',
+      'El incidente se encuentra marcado como resuelto.'
     );
   }
 
@@ -632,9 +682,9 @@ export class IncidenciaDetalle {
             },
           ],
         },
-        (v) => this.api.cerrar(this.id, v.actaCierre, v.conclusionesFinales),
+        (v) => this.api.cerrar(this.id, v.actaCierre, v.conclusionesFinales).pipe(map(() => void 0)),
         '¡Caso cerrado!',
-        'El expediente fue formalmente concluido y archivado.',
+        'El expediente fue formalmente concluido y archivado.'
       );
     });
   }
@@ -665,14 +715,16 @@ export class IncidenciaDetalle {
         ],
       },
       (v) =>
-        this.api.derivarSiseve(
-          this.id,
-          v.codigoSiseve,
-          new Date(v.fecha).toISOString(),
-          v.observaciones || undefined,
-        ),
+        this.api
+          .derivarSiseve(
+            this.id,
+            v.codigoSiseve,
+            new Date(v.fecha).toISOString(),
+            v.observaciones || undefined
+          )
+          .pipe(map(() => void 0)),
       'Derivación registrada',
-      'El caso quedó formalmente vinculado al portal SíSeVe del MINEDU.',
+      'El caso quedó formalmente vinculado al portal SíSeVe del MINEDU.'
     );
   }
 }
