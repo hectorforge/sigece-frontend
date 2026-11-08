@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,8 +11,14 @@ import { MatTableModule } from '@angular/material/table';
 
 import { GRAVEDADES } from '../../../core/models/enums';
 import { AlertService } from '../../../core/services/alert.service';
-import { SiseveDerivacionResponse, SiseveEvaluacion, SisevePendiente } from '../../../core/models/siseve-api.models';
-
+import { SiseveApiService } from '../../../core/services/siseve-api';
+import {
+  ModoDerivacion,
+  SiseveDerivacionRequest,
+  SiseveDerivacionResponse,
+  SiseveEvaluacion,
+  SisevePendiente,
+} from '../../../core/models/siseve-api.models';
 
 @Component({
   selector: 'app-derivacion-list',
@@ -32,20 +38,22 @@ import { SiseveDerivacionResponse, SiseveEvaluacion, SisevePendiente } from '../
   templateUrl: './derivacion-list.html',
   styleUrl: './derivacion-list.css',
 })
-export class DerivacionList {
+export class DerivacionList implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly alert = inject(AlertService);
+  private readonly siseveApi = inject(SiseveApiService);
 
   readonly gravedades = GRAVEDADES;
 
-  // Columnas separadas según la bandeja
+  // Columnas de tablas
   readonly columnasPendientes = ['codigo', 'fecha', 'tipo', 'gravedad', 'plazo', 'alertas', 'acciones'];
   readonly columnasDerivadas = ['codigo', 'codigoSiseve', 'fechaReporte', 'derivadoPor', 'observaciones'];
 
-  // Estados
+  // Estados reactivos
   bandeja = signal<'PENDIENTES' | 'DERIVADOS'>('PENDIENTES');
   cargando = signal(false);
   guardando = signal(false);
+  evaluandoId = signal<string | null>(null);
 
   filtro = signal({
     texto: '',
@@ -55,35 +63,71 @@ export class DerivacionList {
     tamano: 10,
   });
 
-  // Datos crudos del backend
+  // Datos del backend
   listaPendientes = signal<SisevePendiente[]>([]);
   listaDerivadas = signal<SiseveDerivacionResponse[]>([]);
 
-  // Modales
+  // Estados de modales
   casoAEvaluar = signal<SiseveEvaluacion | null>(null);
   casoADerivar = signal<SisevePendiente | null>(null);
 
-  // Formulario reactivo para derivación
+  // Formulario reactivo
   formDerivacion: FormGroup = this.fb.group({
-    codigoSiseve: ['', [Validators.required]],
-    modoDerivacion: ['MANUAL_PORTAL', [Validators.required]],
+    codigoSiseve: ['', [Validators.required, Validators.pattern(/^\S+.*$/)]],
+    modoDerivacion: ['MANUAL_PORTAL' as ModoDerivacion, [Validators.required]],
     observacionesSiseve: [''],
   });
 
-  // ================= COMPUTED SEPARADOS Y ESTRICTAMENTE TIPADOS =================
+  ngOnInit(): void {
+    this.cargarDatos();
+  }
 
-  // 1. Paginado para Pendientes
-  pendientesPaginados = computed<SisevePendiente[]>(() => {
+  // ================= LLAMADAS AL SERVICIO =================
+
+  cargarDatos(): void {
+    this.cargando.set(true);
+
+    if (this.bandeja() === 'PENDIENTES') {
+      this.siseveApi.listarPendientes().subscribe({
+        next: (data) => {
+          this.listaPendientes.set(data ?? []);
+          this.cargando.set(false);
+        },
+        error: (err) => {
+          this.cargando.set(false);
+          this.alert.error('Error al cargar', err?.error?.message || 'No se pudieron obtener los casos pendientes.');
+        },
+      });
+    } else {
+      this.siseveApi.listarDerivados().subscribe({
+        next: (data) => {
+          this.listaDerivadas.set(data ?? []);
+          this.cargando.set(false);
+        },
+        error: (err) => {
+          this.cargando.set(false);
+          this.alert.error('Error al cargar', err?.error?.message || 'No se pudieron obtener los casos derivados.');
+        },
+      });
+    }
+  }
+
+  // ================= FILTRADO Y PAGINACIÓN =================
+
+  // 1. Filtrado de pendientes
+  pendientesFiltrados = computed<SisevePendiente[]>(() => {
     const texto = this.filtro().texto.toLowerCase().trim();
     const grav = this.filtro().gravedad;
     const urg = this.filtro().urgente;
 
-    const filtrados = this.listaPendientes().filter((item) => {
+    return this.listaPendientes().filter((item) => {
       const matchTexto =
         !texto ||
         item.codigoCaso?.toLowerCase().includes(texto) ||
         item.tipoIncidenciaNombre?.toLowerCase().includes(texto);
+
       const matchGravedad = !grav || item.gravedad === grav;
+
       const matchUrgente =
         !urg ||
         (urg === 'urgente' && item.diasTranscurridos >= 1) ||
@@ -91,39 +135,47 @@ export class DerivacionList {
 
       return matchTexto && matchGravedad && matchUrgente;
     });
-
-    const inicio = this.filtro().pagina * this.filtro().tamano;
-    return filtrados.slice(inicio, inicio + this.filtro().tamano);
   });
 
-  // 2. Paginado para Derivadas
-  derivadasPaginadas = computed<SiseveDerivacionResponse[]>(() => {
+  // 2. Filtrado de derivadas
+  derivadasFiltradas = computed<SiseveDerivacionResponse[]>(() => {
     const texto = this.filtro().texto.toLowerCase().trim();
 
-    const filtrados = this.listaDerivadas().filter((item) => {
+    return this.listaDerivadas().filter((item) => {
       return (
         !texto ||
         item.codigoCaso?.toLowerCase().includes(texto) ||
         item.codigoSiseve?.toLowerCase().includes(texto) ||
-        (item.derivadoPor ?? '').toLowerCase().includes(texto)
+        (item.derivadoPor ?? '').toLowerCase().includes(texto) ||
+        (item.observacionesSiseve ?? '').toLowerCase().includes(texto)
       );
     });
-
-    const inicio = this.filtro().pagina * this.filtro().tamano;
-    return filtrados.slice(inicio, inicio + this.filtro().tamano);
   });
 
+  // Total de elementos según los filtros activos para sincronizar el paginador
   totalElementos = computed(() => {
     return this.bandeja() === 'PENDIENTES'
-      ? this.listaPendientes().length
-      : this.listaDerivadas().length;
+      ? this.pendientesFiltrados().length
+      : this.derivadasFiltradas().length;
   });
 
-  // ================= MÉTODOS =================
+  // Elementos paginados para las tablas
+  pendientesPaginados = computed<SisevePendiente[]>(() => {
+    const inicio = this.filtro().pagina * this.filtro().tamano;
+    return this.pendientesFiltrados().slice(inicio, inicio + this.filtro().tamano);
+  });
+
+  derivadasPaginadas = computed<SiseveDerivacionResponse[]>(() => {
+    const inicio = this.filtro().pagina * this.filtro().tamano;
+    return this.derivadasFiltradas().slice(inicio, inicio + this.filtro().tamano);
+  });
+
+  // ================= EVENTOS DE INTERFAZ =================
 
   cambiarBandeja(nuevaBandeja: 'PENDIENTES' | 'DERIVADOS'): void {
     this.bandeja.set(nuevaBandeja);
     this.filtro.update((f) => ({ ...f, pagina: 0 }));
+    this.cargarDatos();
   }
 
   cambiar(parcial: Partial<{ texto: string; gravedad: string; urgente: string }>): void {
@@ -134,22 +186,31 @@ export class DerivacionList {
     this.filtro.update((f) => ({ ...f, pagina: e.pageIndex, tamano: e.pageSize }));
   }
 
+  // ================= EVALUACIÓN =================
+
   abrirEvaluacion(caso: SisevePendiente): void {
-    // Si tienes un endpoint para evaluar, llámalo aquí. Ejemplo visual:
-    this.casoAEvaluar.set({
-      codigoCaso: caso.codigoCaso,
-      derivacionObligatoria: caso.gravedad === 'GRAVE' || caso.gravedad === 'MUY_GRAVE',
-      recomendacionTecnica:
-        caso.gravedad === 'GRAVE'
-          ? 'El protocolo SíSeVe exige derivación obligatoria en menos de 24 horas por gravedad reportada.'
-          : 'Derivación preventiva sugerida según criterio pedagógico.',
-      baseLegal: 'D.S. N° 004-2018-MINEDU - Lineamientos para la Gestión de la Convivencia Escolar.',
-    } as SiseveEvaluacion);
+    this.evaluandoId.set(caso.incidenteId);
+
+    this.siseveApi.evaluarCaso(caso.incidenteId).subscribe({
+      next: (evaluacion) => {
+        this.evaluandoId.set(null);
+        this.casoAEvaluar.set(evaluacion);
+      },
+      error: (err) => {
+        this.evaluandoId.set(null);
+        this.alert.error(
+          'Error de consulta',
+          err?.error?.message || 'No se pudo obtener la evaluación técnica del caso.'
+        );
+      },
+    });
   }
 
   cerrarEvaluacion(): void {
     this.casoAEvaluar.set(null);
   }
+
+  // ================= DERIVACIÓN =================
 
   abrirDerivar(caso: SisevePendiente): void {
     this.casoADerivar.set(caso);
@@ -173,10 +234,10 @@ export class DerivacionList {
     const caso = this.casoADerivar();
     if (!caso) return;
 
-    const val = this.formDerivacion.value;
+    const val = this.formDerivacion.getRawValue();
 
     const confirmar = await this.alert.confirmar(
-      `¿Registrar derivación a SíSeVe?`,
+      '¿Registrar derivación a SíSeVe?',
       `El caso ${caso.codigoCaso} quedará registrado con el código SíSeVe: ${val.codigoSiseve}`,
       'Sí, registrar derivación'
     );
@@ -185,12 +246,26 @@ export class DerivacionList {
 
     this.guardando.set(true);
 
-    // Aquí invocas tu servicio API de derivación
-    // Ejemplo: this.siseveApi.derivar(caso.incidenteId, val).subscribe(...)
-    setTimeout(() => {
-      this.guardando.set(false);
-      this.cerrarDerivar();
-      this.alert.exito('Caso derivado exitosamente', `Código SíSeVe asignado: ${val.codigoSiseve}`);
-    }, 600);
+    const payload: SiseveDerivacionRequest = {
+      codigoSiseve: val.codigoSiseve.trim(),
+      modoDerivacion: val.modoDerivacion,
+      observacionesSiseve: val.observacionesSiseve?.trim() || undefined,
+    };
+
+    this.siseveApi.derivarCaso(caso.incidenteId, payload).subscribe({
+      next: (res) => {
+        this.guardando.set(false);
+        this.cerrarDerivar();
+        this.alert.exito('Caso derivado exitosamente', `Código SíSeVe asignado: ${res.codigoSiseve}`);
+        this.cargarDatos();
+      },
+      error: (err) => {
+        this.guardando.set(false);
+        this.alert.error(
+          'Error al registrar derivación',
+          err?.error?.message || 'Ocurrió un error al procesar la derivación.'
+        );
+      },
+    });
   }
 }
