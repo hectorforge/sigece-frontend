@@ -1,0 +1,64 @@
+:host {
+    display: block;
+  }
+  
+  /* Tarjeta informativa del aula actual */
+  .info-aula-card {
+    background: var(--mat-sys-surface-variant, #f1f5f9);
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13.5px;
+  }
+  
+  .dato-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .etiqueta {
+    color: #64748b;
+    font-weight: 500;
+  }
+  
+  .valor {
+    color: #0f172a;
+  }
+  
+  .sin-tutor-tag {
+    color: #b45309;
+    font-style: italic;
+    font-weight: 500;
+  }
+  
+  .formulario-asignar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  
+  .w-full {
+    width: 100%;
+  }
+  
+  .opcion-tutor {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .tutor-dni {
+    font-size: 12px;
+    color: #64748b;
+  }
+  
+  mat-dialog-actions {
+    padding: 16px 24px;
+    gap: 8px;
+  }

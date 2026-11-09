@@ -1,7 +1,8 @@
-import { RouterLink } from '@angular/router';
 import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, combineLatest, of, switchMap } from 'rxjs';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,13 +11,15 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { Auth } from '../../../core/auth/auth';
-import { NIVELES } from '../../../core/models/enums';
+import { Nivel, NIVELES } from '../../../core/models/enums';
 import { Estudiante, EstudianteFiltro } from '../../../core/models/estudiante.models';
 import { EstudianteApi } from '../../../core/services/estudiante-api';
 import { AlertService } from '../../../core/services/alert.service';
 import { EstudianteForm } from '../estudiante-form/estudiante-form';
+import { AsignarAulaDialog } from '../asignar-aula-dialog/asignar-aula-dialog';
 
 @Component({
   selector: 'app-estudiante-list',
@@ -29,6 +32,7 @@ import { EstudianteForm } from '../estudiante-form/estudiante-form';
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
+    MatTooltipModule,
     RouterLink,
   ],
   templateUrl: './estudiante-list.html',
@@ -40,18 +44,20 @@ export class EstudianteList {
   private readonly auth = inject(Auth);
   private readonly alert = inject(AlertService);
 
-  readonly niveles = NIVELES;
-  readonly columnas = ['codigo', 'nombre', 'nivel', 'estado', 'acciones'];
+  readonly anioActual = new Date().getFullYear();
+  readonly niveles: readonly Nivel[] = NIVELES;
+  readonly columnas = ['codigo', 'nombre', 'aula', 'estado', 'acciones'];
 
-  // Control de permisos según roles (UC-04 / UC-05)
   readonly puedeEditar = this.auth.tieneRol(['ROLE_ADMINISTRADOR']);
   readonly soloSusAulas = this.auth.tieneRol(['ROLE_TUTOR']);
 
+  // Filtros completos según EstudianteFiltroRequestDto
   filtro = signal<EstudianteFiltro>({
     termino: '',
     nivel: '',
     grado: '',
     seccion: '',
+    anioEscolar: this.anioActual,
     activo: true,
     page: 0,
     size: 10,
@@ -77,6 +83,19 @@ export class EstudianteList {
     this.filtro.update((f) => ({ ...f, ...parcial, page: 0 }));
   }
 
+  limpiarFiltros(): void {
+    this.filtro.set({
+      termino: '',
+      nivel: '',
+      grado: '',
+      seccion: '',
+      anioEscolar: this.anioActual,
+      activo: true,
+      page: 0,
+      size: 10,
+    });
+  }
+
   paginar(e: PageEvent): void {
     this.filtro.update((f) => ({ ...f, page: e.pageIndex, size: e.pageSize }));
   }
@@ -86,9 +105,16 @@ export class EstudianteList {
       .open(EstudianteForm, { width: '560px', data: est })
       .afterClosed()
       .subscribe((ok) => {
-        if (ok) {
-          this.recarga.update((n) => n + 1);
-        }
+        if (ok) this.recarga.update((n) => n + 1);
+      });
+  }
+
+  abrirAsignarAula(est: Estudiante): void {
+    this.dialog
+      .open(AsignarAulaDialog, { width: '480px', data: est })
+      .afterClosed()
+      .subscribe((ok) => {
+        if (ok) this.recarga.update((n) => n + 1);
       });
   }
 
@@ -96,7 +122,6 @@ export class EstudianteList {
     const accion = e.activo ? 'desactivar' : 'reactivar';
     const nombreCompleto = `${e.nombres} ${e.apellidos}`;
 
-    // Confirmación modal con AlertService (SweetAlert2)
     const confirmado = e.activo
       ? await this.alert.confirmarPeligro(
           `¿Deseas desactivar a ${nombreCompleto}?`,
@@ -122,18 +147,11 @@ export class EstudianteList {
         this.recarga.update((n) => n + 1);
       },
       error: (err) => {
-        const errorMsg =
-          err?.error?.message ??
-          err?.error?.mensaje ??
-          err?.message ??
-          `No se pudo ${accion} al estudiante.`;
-
-        this.alert.error(errorMsg, 'Error al actualizar estado');
+        this.alert.error(err?.error?.message ?? `No se pudo ${accion} al estudiante.`);
       },
     });
   }
 
-  // NUEVO MÉTODO: Eliminación física/lógica definitiva con SweetAlert2
   async eliminar(e: Estudiante): Promise<void> {
     const nombreCompleto = `${e.nombres} ${e.apellidos}`;
 
@@ -154,13 +172,7 @@ export class EstudianteList {
         this.recarga.update((n) => n + 1);
       },
       error: (err) => {
-        const errorMsg =
-          err?.error?.message ??
-          err?.error?.mensaje ??
-          err?.message ??
-          'No se pudo eliminar al estudiante.';
-
-        this.alert.error(errorMsg, 'Error al eliminar');
+        this.alert.error(err?.error?.message ?? 'No se pudo eliminar al estudiante.');
       },
     });
   }

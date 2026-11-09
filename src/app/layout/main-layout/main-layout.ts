@@ -36,7 +36,7 @@ export const MENU_ITEMS: MenuItem[] = [
   // --- Reportes y SíSeVe ---
   { label: 'Derivaciones SíSeVe', icon: 'send', ruta: '/derivaciones', roles: ROL_ADMIN, seccion: 'Reportes y SíSeVe' },
   { label: 'Indicadores', icon: 'dashboard', ruta: '/dashboard', roles: ROL_ADMIN, seccion: 'Reportes y SíSeVe' },
-  { label: 'Reportes', icon: 'assessment', ruta: '/reportes', roles: ROL_ADMIN, seccion: 'Reportes y SíSeVe' },
+  /*{ label: 'Reportes', icon: 'assessment', ruta: '/reportes', roles: ROL_ADMIN, seccion: 'Reportes y SíSeVe' },*/
 
   // --- Configuración y Administración ---
   { label: 'Asignación Aulas', icon: 'meeting_room', ruta: '/admin/tutor-aulas', roles: ROL_ADMIN, seccion: 'Configuración' },

@@ -115,12 +115,13 @@ export const routes: Routes = [
 
       // [PENDIENTE] CU22. Reportes consolidados exportables
       // TODO: Crear componente features/reportes/reporte-generador
+      /*
       {
         path: 'reportes',
         canActivate: [roleGuard],
         loadComponent: placeholder,
         data: { titulo: 'Generador de Reportes (CU22)', roles: ROL_ADMIN },
-      },
+      },*/
 
       // =====================================================================
       // 4. ADMINISTRACIÓN Y CONFIGURACIÓN INSTITUCIONAL
@@ -147,7 +148,7 @@ export const routes: Routes = [
       {
         path: 'admin/tutor-aulas',
         canActivate: [roleGuard],
-        loadComponent: () => import('./features/tutor-aula/tutor-aula-list/tutor-aula-list').then((m) => m.TutorAulaList),
+        loadComponent: () => import('./features/aula/aula-list/aula-list').then((m) => m.AulaList),
         data: { titulo: 'Asignación de Aulas a Tutores', roles: ROL_ADMIN },
       },
 

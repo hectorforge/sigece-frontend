@@ -51,6 +51,7 @@ import { MotivoDialog } from '../../../shared/motivo-dialog/motivo-dialog';
 import { InvolucradoDialog } from '../involucrado-dialog/involucrado-dialog';
 import { EvidenciaDialog } from '../evidencia-dialog/evidencia-dialog';
 import { AsignarResponsableDialog } from '../asignar-responsable-dialog/asignar-responsable-dialog';
+import { ReporteApi } from '../../../core/services/reporte-api';
 
 function aLocalDateString(valor: Date | string | null | undefined): string | null {
   if (!valor) return null;
@@ -90,6 +91,8 @@ function aOffsetDateTimeString(valor: Date | string | null | undefined): string 
 })
 export class IncidenciaDetalle {
   private readonly route = inject(ActivatedRoute);
+  private readonly reporteApi = inject(ReporteApi);
+  readonly exportandoExpediente = signal(false);
   private readonly api = inject(IncidenteApi);
   private readonly accionesApi = inject(AccionSeguimientoApi);
   private readonly dialog = inject(MatDialog);
@@ -686,6 +689,29 @@ export class IncidenciaDetalle {
         '¡Caso cerrado!',
         'El expediente fue formalmente concluido y archivado.'
       );
+    });
+  }
+
+  descargarExpedientePdf(anonimizar = false): void {
+    if (!this.esAdmin || this.exportandoExpediente()) return;
+
+    this.exportandoExpediente.set(true);
+
+    this.reporteApi.exportarExpediente(this.id, 'PDF', anonimizar).subscribe({
+      next: () => {
+        this.exportandoExpediente.set(false);
+        this.alert.exito(
+          'Expediente descargado',
+          'El archivo PDF del expediente se ha generado y descargado correctamente.'
+        );
+      },
+      error: (err) => {
+        this.exportandoExpediente.set(false);
+        this.alert.error(
+          err?.error?.message || 'Ocurrió un error al generar el expediente en PDF.',
+          'Error de exportación'
+        );
+      },
     });
   }
 

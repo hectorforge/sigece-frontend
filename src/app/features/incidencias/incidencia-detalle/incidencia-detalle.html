@@ -16,6 +16,20 @@
   </button>
   }
 
+  <!-- Botón Descargar Expediente PDF (ADMIN, TUTOR y PSICÓLOGO) -->
+  @if (esAdmin) {
+    <button
+      mat-stroked-button
+      color="primary"
+      [disabled]="exportandoExpediente()"
+      (click)="descargarExpedientePdf(false)"
+      matTooltip="Descargar expediente oficial con bitácora de seguimiento en PDF"
+    >
+      <mat-icon>{{ exportandoExpediente() ? 'hourglass_top' : 'picture_as_pdf' }}</mat-icon>
+      {{ exportandoExpediente() ? 'Generando PDF...' : 'Descargar Expediente' }}
+    </button>
+    }
+
   <!-- Rol: PSICÓLOGO resuelve el caso -->
   @if (e.incidente.estado === 'EN_SEGUIMIENTO' && esPsicologo) {
   <button mat-flat-button color="primary" (click)="resolver()">

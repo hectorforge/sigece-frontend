@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>Asignar / Cambiar de Aula</h2>
+<mat-dialog-content>
+  <div class="info-actual">
+    Estudiante: <strong>{{ estudiante.apellidos }}, {{ estudiante.nombres }}</strong><br />
+    Aula actual: <strong>{{ estudiante.nivel }} · {{ estudiante.grado }} "{{ estudiante.seccion }}"</strong>
+  </div>
+
+  <form [formGroup]="form">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Seleccionar nueva aula</mat-label>
+      <mat-select formControlName="aulaId">
+        @for (a of aulas(); track a.id) {
+          <mat-option [value]="a.id">
+            {{ a.nivel }} - {{ a.grado }} "{{ a.seccion }}" ({{ a.anioEscolar }})
+            @if (a.tutorNombreCompleto) { · Tutor: {{ a.tutorNombreCompleto }} }
+          </mat-option>
+        }
+      </mat-select>
+      @if (form.controls.aulaId.hasError('required')) {
+        <mat-error>El aula es obligatoria</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()">Cancelar</button>
+  <button mat-flat-button color="primary" [disabled]="guardando() || form.invalid" (click)="guardar()">
+    Guardar asignación
+  </button>
+</mat-dialog-actions>

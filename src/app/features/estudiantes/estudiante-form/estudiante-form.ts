@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   AbstractControl,
@@ -15,12 +15,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
-import { Nivel, NIVELES } from '../../../core/models/enums';
 import { Estudiante, EstudianteRequest } from '../../../core/models/estudiante.models';
+import { AulaResponseDto } from '../../../core/models/aula.models';
 import { EstudianteApi } from '../../../core/services/estudiante-api';
+import { AulaApi } from '../../../core/services/aula-api';
 import { AlertService } from '../../../core/services/alert.service';
 
-// Validador personalizado para asegurar que la fecha sea en el pasado (@Past)
 export const fechaPasadaValidator: ValidatorFn = (
   control: AbstractControl
 ): ValidationErrors | null => {
@@ -50,19 +50,18 @@ export const fechaPasadaValidator: ValidatorFn = (
   templateUrl: './estudiante-form.html',
   styleUrl: './estudiante-form.css',
 })
-export class EstudianteForm {
+export class EstudianteForm implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(EstudianteApi);
+  private readonly aulaApi = inject(AulaApi);
   private readonly alert = inject(AlertService);
   private readonly ref = inject(MatDialogRef<EstudianteForm>);
 
   readonly datos = inject<Estudiante | null>(MAT_DIALOG_DATA);
   readonly backendError = signal<string | null>(null);
   readonly guardando = signal(false);
+  readonly aulas = signal<AulaResponseDto[]>([]);
 
-  readonly niveles = NIVELES;
-
-  // Límite HTML para el input date (hasta el día de ayer)
   readonly maxFecha = (() => {
     const d = new Date();
     d.setDate(d.getDate() - 1);
@@ -72,7 +71,6 @@ export class EstudianteForm {
     return `${anio}-${mes}-${dia}`;
   })();
 
-  // Formulario con validaciones equivalentes al EstudianteRequestDto del backend
   form = this.fb.nonNullable.group({
     codigoSiagie: [
       this.datos?.codigoSiagie ?? '',
@@ -80,50 +78,34 @@ export class EstudianteForm {
         Validators.required,
         Validators.minLength(3),
         Validators.maxLength(20),
-        Validators.pattern(/^[a-zA-Z0-9\-_]+$/), // Alfanumérico sin caracteres extraños
+        Validators.pattern(/^[a-zA-Z0-9\-_]+$/),
       ],
     ],
     nombres: [
       this.datos?.nombres ?? '',
-      [
-        Validators.required,
-        Validators.minLength(2),
-        Validators.maxLength(100),
-      ],
+      [Validators.required, Validators.minLength(2), Validators.maxLength(100)],
     ],
     apellidos: [
       this.datos?.apellidos ?? '',
-      [
-        Validators.required,
-        Validators.minLength(2),
-        Validators.maxLength(100),
-      ],
+      [Validators.required, Validators.minLength(2), Validators.maxLength(100)],
     ],
     fechaNacimiento: [
       this.datos?.fechaNacimiento ?? '',
       [Validators.required, fechaPasadaValidator],
     ],
-    nivel: [
-      (this.datos?.nivel ?? '') as Nivel | '',
+    aulaId: [
+      this.datos?.aulaId ?? (null as unknown as number),
       [Validators.required],
     ],
-    grado: [
-      this.datos?.grado ?? '',
-      [
-        Validators.required,
-        Validators.minLength(1),
-        Validators.maxLength(20),
-      ],
-    ],
-    seccion: [
-      this.datos?.seccion ?? '',
-      [
-        Validators.required,
-        Validators.minLength(1),
-        Validators.maxLength(10),
-      ],
-    ],
   });
+
+  ngOnInit(): void {
+    // Carga de salones activos disponibles
+    this.aulaApi.listarOpcionesActivas().subscribe({
+      next: (res) => this.aulas.set(res ?? []),
+      error: () => this.alert.error('No se pudo cargar el catálogo de aulas.'),
+    });
+  }
 
   guardar(): void {
     this.backendError.set(null);
@@ -138,17 +120,14 @@ export class EstudianteForm {
     }
 
     this.guardando.set(true);
-
-    // Sanitización (.trim() para evitar espacios en blanco accidentales)
     const raw = this.form.getRawValue();
+
     const dto: EstudianteRequest = {
       codigoSiagie: raw.codigoSiagie.trim(),
       nombres: raw.nombres.trim(),
       apellidos: raw.apellidos.trim(),
       fechaNacimiento: raw.fechaNacimiento,
-      nivel: raw.nivel as Nivel,
-      grado: raw.grado.trim(),
-      seccion: raw.seccion.trim().toUpperCase(),
+      aulaId: raw.aulaId,
     };
 
     const req$ = this.datos
@@ -158,13 +137,10 @@ export class EstudianteForm {
     req$.subscribe({
       next: () => {
         this.guardando.set(false);
-
-        // Notificación de éxito con AlertService
         this.alert.exito(
           this.datos ? '¡Estudiante actualizado!' : '¡Estudiante registrado!',
           'Los datos se guardaron correctamente en el padrón.'
         );
-
         this.ref.close(true);
       },
       error: (err: HttpErrorResponse) => {
@@ -176,16 +152,12 @@ export class EstudianteForm {
 
   async cancelar(): Promise<void> {
     if (this.form.dirty) {
-      // Confirmación con AlertService (SweetAlert2) si hay datos modificados
       const confirmarSalida = await this.alert.confirmarPeligro(
         '¿Deseas cancelar?',
         'Tienes cambios sin guardar que se perderán definitivamente.',
         'Sí, salir'
       );
-
-      if (confirmarSalida) {
-        this.ref.close(false);
-      }
+      if (confirmarSalida) this.ref.close(false);
     } else {
       this.ref.close(false);
     }
@@ -193,32 +165,15 @@ export class EstudianteForm {
 
   private manejarError(err: HttpErrorResponse): void {
     const body = err.error;
-
-    // 1) Asignar errores específicos devueltos por el backend a cada campo
-    const errores = body?.errors as Record<string, string> | undefined;
-    if (errores && typeof errores === 'object') {
-      for (const [campo, mensaje] of Object.entries(errores)) {
-        const control = this.form.get(campo);
-        if (control) {
-          control.setErrors({ backend: mensaje });
-          control.markAsTouched();
-        }
-      }
-    }
-
-    // 2) Extraer mensaje general de error
     const mensajeGeneral =
       body?.message ??
       body?.mensaje ??
-      'Ocurrió un error al intentar guardar el estudiante.';
+      'Ocurrió un error al intentar procesar los datos del estudiante.';
 
     this.backendError.set(mensajeGeneral);
-
-    // Modal de error de SweetAlert2 con AlertService
-    this.alert.error(mensajeGeneral, 'Error al procesar solicitud');
+    this.alert.error(mensajeGeneral, 'Error al guardar');
   }
 
-  // Helper para mostrar mensajes de error del backend en la vista
   errorBackend(campo: string): string | null {
     return this.form.get(campo)?.getError('backend') ?? null;
   }

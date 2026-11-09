@@ -40,6 +40,30 @@
       </mat-select>
     </mat-form-field>
   }
+
+  @if (esAdmin) {
+    <button
+      mat-stroked-button
+      color="primary"
+      [disabled]="exportandoDerivaciones()"
+      [matMenuTriggerFor]="menuExportar"
+    >
+      <mat-icon>{{ exportandoDerivaciones() ? 'hourglass_top' : 'file_download' }}</mat-icon>
+      {{ exportandoDerivaciones() ? 'Exportando...' : 'Exportar Padrón' }}
+      <mat-icon>arrow_drop_down</mat-icon>
+    </button>
+  
+    <mat-menu #menuExportar="matMenu">
+      <button mat-menu-item (click)="exportarDerivaciones('PDF')">
+        <mat-icon>picture_as_pdf</mat-icon>
+        <span>Descargar en PDF</span>
+      </button>
+      <button mat-menu-item (click)="exportarDerivaciones('EXCEL')">
+        <mat-icon>table_view</mat-icon>
+        <span>Descargar en Excel</span>
+      </button>
+    </mat-menu>
+  }
 </div>
 
 <div class="tabla mat-elevation-z1">

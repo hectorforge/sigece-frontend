@@ -1,0 +1,119 @@
+<h2 mat-dialog-title>Registrar Nueva Aula</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="formulario-modal">
+    @if (backendError()) {
+      <div class="mensaje-error-backend">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ backendError() }}</span>
+      </div>
+    }
+
+    <div class="fila-dos-columnas">
+      <!-- Nivel Educativo -->
+      <mat-form-field appearance="outline">
+        <mat-label>Nivel Educativo</mat-label>
+        <mat-select formControlName="nivel">
+          @for (n of niveles; track n) {
+            <mat-option [value]="n">{{ n }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.nivel.hasError('required')) {
+          <mat-error>El nivel es obligatorio</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- Año Escolar -->
+      <mat-form-field appearance="outline">
+        <mat-label>Año Escolar</mat-label>
+        <input matInput type="number" formControlName="anioEscolar" min="2000" max="2100" />
+        @if (form.controls.anioEscolar.hasError('required')) {
+          <mat-error>El año es obligatorio</mat-error>
+        }
+        @if (form.controls.anioEscolar.hasError('min') || form.controls.anioEscolar.hasError('max')) {
+          <mat-error>Año entre 2000 y 2100</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="fila-dos-columnas">
+      <!-- Grado -->
+      <mat-form-field appearance="outline">
+        <mat-label>Grado</mat-label>
+        <input matInput formControlName="grado" placeholder="Ej. 1, 2, Primero" maxlength="20" />
+        @if (form.controls.grado.hasError('required')) {
+          <mat-error>El grado es obligatorio</mat-error>
+        }
+        @if (errorBackend('grado')) {
+          <mat-error>{{ errorBackend('grado') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- Sección -->
+      <mat-form-field appearance="outline">
+        <mat-label>Sección</mat-label>
+        <input matInput formControlName="seccion" placeholder="Ej. A, B, U" maxlength="10" />
+        @if (form.controls.seccion.hasError('required')) {
+          <mat-error>La sección es obligatoria</mat-error>
+        }
+        @if (errorBackend('seccion')) {
+          <mat-error>{{ errorBackend('seccion') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <!-- BÚSQUEDA REACTIVA DE TUTOR CON AUTOCOMPLETE -->
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Docente Tutor (Opcional)</mat-label>
+      <input
+        matInput
+        formControlName="tutor"
+        [matAutocomplete]="autoTutor"
+        placeholder="Escribe apellido, nombre o DNI del tutor..."
+      />
+      <mat-icon matPrefix>badge</mat-icon>
+
+      @if (form.controls.tutor.value) {
+        <button mat-icon-button matSuffix type="button" (click)="limpiarTutor($event)" title="Limpiar tutor">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+
+      <mat-autocomplete
+        #autoTutor="matAutocomplete"
+        [displayWith]="mostrarTutor"
+        (optionSelected)="tutorSeleccionado.set($event.option.value)"
+      >
+        @for (t of tutoresResultados(); track t.id) {
+          <mat-option [value]="t">
+            <div class="opcion-tutor">
+              <strong>{{ t.apellidos }}, {{ t.nombres }}</strong>
+              <small class="tutor-dni"> · DNI: {{ t.dni }}</small>
+            </div>
+          </mat-option>
+        }
+      </mat-autocomplete>
+      <mat-hint>Escribe al menos 2 letras para buscar entre los docentes tutores</mat-hint>
+
+      @if (form.controls.tutor.hasError('noSeleccionado')) {
+        <mat-error>Debes seleccionar un docente de la lista o limpiar el campo</mat-error>
+      }
+      @if (errorBackend('tutorId')) {
+        <mat-error>{{ errorBackend('tutorId') }}</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancelar()" [disabled]="guardando()">
+    Cancelar
+  </button>
+  <button mat-flat-button color="primary" (click)="guardar()" [disabled]="guardando() || form.invalid">
+    @if (guardando()) {
+      <span>Guardando...</span>
+    } @else {
+      <span>Registrar Aula</span>
+    }
+  </button>
+</mat-dialog-actions>

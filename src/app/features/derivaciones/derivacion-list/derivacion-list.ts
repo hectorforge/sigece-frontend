@@ -19,6 +19,9 @@ import {
   SiseveEvaluacion,
   SisevePendiente,
 } from '../../../core/models/siseve-api.models';
+import { MatMenuModule } from '@angular/material/menu';
+import { Auth } from '../../../core/auth/auth';
+import { ReporteApi } from '../../../core/services/reporte-api';
 
 @Component({
   selector: 'app-derivacion-list',
@@ -34,6 +37,7 @@ import {
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
+    MatMenuModule
   ],
   templateUrl: './derivacion-list.html',
   styleUrl: './derivacion-list.css',
@@ -42,6 +46,10 @@ export class DerivacionList implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly alert = inject(AlertService);
   private readonly siseveApi = inject(SiseveApiService);
+  private readonly auth = inject(Auth);
+  private readonly reporteApi = inject(ReporteApi);
+  readonly exportandoDerivaciones = signal(false);
+  readonly esAdmin = this.auth.tieneRol(['ROLE_ADMINISTRADOR']);
 
   readonly gravedades = GRAVEDADES;
 
@@ -208,6 +216,29 @@ export class DerivacionList implements OnInit {
 
   cerrarEvaluacion(): void {
     this.casoAEvaluar.set(null);
+  }
+
+  exportarDerivaciones(formato: 'PDF' | 'EXCEL' = 'PDF'): void {
+    if (!this.esAdmin || this.exportandoDerivaciones()) return;
+
+    this.exportandoDerivaciones.set(true);
+
+    this.reporteApi.exportarDerivacionesSiseve(formato).subscribe({
+      next: () => {
+        this.exportandoDerivaciones.set(false);
+        this.alert.exito(
+          'Padrón exportado',
+          `El reporte de derivaciones a SíSeVe (${formato}) se generó exitosamente.`
+        );
+      },
+      error: (err) => {
+        this.exportandoDerivaciones.set(false);
+        this.alert.error(
+          err?.error?.message || 'No se pudo generar el reporte de derivaciones.',
+          'Error de exportación'
+        );
+      },
+    });
   }
 
   // ================= DERIVACIÓN =================

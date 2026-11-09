@@ -8,18 +8,29 @@
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
+    align-items: center;
 }
-
 
 .filtros .buscar {
-    flex: 1 1 320px;
-    min-width: 280px;
-    max-width: 480px;
+    flex: 1 1 280px;
+    min-width: 240px;
 }
 
-
 .filtros .tipo {
-    flex: 0 0 220px;
+    flex: 0 0 180px;
+}
+
+.filtros .medio {
+    flex: 0 0 130px;
+}
+
+.filtros .corto {
+    flex: 0 0 95px;
+}
+
+.btn-limpiar {
+    height: 48px;
+    margin-bottom: 22px; /* Alineación con el baseline de mat-form-field */
 }
 
 .tabla {
@@ -34,10 +45,21 @@
     font-size: 12px;
     background: #2e7d32;
     color: #fff;
+    display: inline-block;
 }
 
 .est.off {
     background: #757575;
+}
+
+.aula-badge {
+    font-size: 13px;
+    color: var(--mat-sys-on-surface);
+}
+
+.acciones-cell {
+    white-space: nowrap;
+    text-align: right;
 }
 
 .vacio {

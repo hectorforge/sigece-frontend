@@ -1,0 +1,83 @@
+<h2 mat-dialog-title>
+    {{ aula.tutorId ? 'Reasignar Tutor' : 'Asignar Tutor al Aula' }}
+  </h2>
+  
+  <mat-dialog-content>
+    <!-- Ficha informativa del Aula -->
+    <div class="info-aula-card">
+      <div class="dato-fila">
+        <span class="etiqueta">Aula / Sección:</span>
+        <strong class="valor">{{ aula.nivel }} · {{ aula.grado }}° "{{ aula.seccion }}"</strong>
+      </div>
+      <div class="dato-fila">
+        <span class="etiqueta">Año Lectivo:</span>
+        <span class="valor">{{ aula.anioEscolar }}</span>
+      </div>
+      <div class="dato-fila">
+        <span class="etiqueta">Tutor actual:</span>
+        <span class="valor" [class.sin-tutor-tag]="!aula.tutorNombreCompleto">
+          {{ aula.tutorNombreCompleto || 'Vacante (Sin tutor asignado)' }}
+        </span>
+      </div>
+    </div>
+  
+    <form [formGroup]="form" class="formulario-asignar">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Buscar Docente Tutor</mat-label>
+        <input
+          matInput
+          formControlName="tutor"
+          [matAutocomplete]="autoTutor"
+          placeholder="Escribe apellido, nombre o DNI..."
+        />
+        <mat-icon matPrefix>person_search</mat-icon>
+  
+        @if (form.controls.tutor.value) {
+          <button mat-icon-button matSuffix type="button" (click)="limpiarTutor($event)" title="Limpiar selección">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+  
+        <mat-autocomplete
+          #autoTutor="matAutocomplete"
+          [displayWith]="mostrarTutor"
+          (optionSelected)="tutorSeleccionado.set($event.option.value)"
+        >
+          @for (t of tutoresResultados(); track t.id) {
+            <mat-option [value]="t">
+              <div class="opcion-tutor">
+                <strong>{{ t.apellidos }}, {{ t.nombres }}</strong>
+                <small class="tutor-dni"> · DNI: {{ t.dni }}</small>
+              </div>
+            </mat-option>
+          }
+        </mat-autocomplete>
+        <mat-hint>Escribe al menos 2 caracteres para buscar entre los tutores</mat-hint>
+  
+        @if (form.controls.tutor.hasError('required')) {
+          <mat-error>Debes seleccionar un tutor</mat-error>
+        }
+        @if (form.controls.tutor.hasError('noSeleccionado')) {
+          <mat-error>Selecciona un docente de la lista desplegable sugerida</mat-error>
+        }
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+  
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancelar()" [disabled]="guardando()">
+      Cancelar
+    </button>
+    <button
+      mat-flat-button
+      color="primary"
+      (click)="guardar()"
+      [disabled]="guardando() || !tutorSeleccionado()"
+    >
+      @if (guardando()) {
+        <span>Guardando...</span>
+      } @else {
+        <span>{{ aula.tutorId ? 'Actualizar Tutor' : 'Asignar Tutor' }}</span>
+      }
+    </button>
+  </mat-dialog-actions>
