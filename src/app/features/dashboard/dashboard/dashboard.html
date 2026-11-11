@@ -36,19 +36,40 @@
 </header>
 
 <div class="filtros">
-  <mat-form-field appearance="outline">
+  <!-- Cápsula integrada para filtrar por año (No salta ni descuadra) -->
+  <div class="control-anio" [class.activo]="filtrarPorAnio()">
+    <mat-checkbox 
+      [checked]="filtrarPorAnio()" 
+      (change)="toggleFiltroAnio($event.checked)">
+      Por año:
+    </mat-checkbox>
+    <input 
+      class="campo-anio"
+      type="number" 
+      [value]="anioFiltro()" 
+      [disabled]="!filtrarPorAnio()"
+      (change)="cambiarAnio($any($event.target).value)"
+      (keyup.enter)="cambiarAnio($any($event.target).value)" 
+      placeholder="2030"
+      min="2000" 
+      max="2100" />
+  </div>
+
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label>Desde</mat-label>
-    <input matInput type="date" [value]="filtro().fechaDesde" [max]="hoy"
+    <input matInput type="date" [value]="filtro().fechaDesde"
+      [readonly]="filtrarPorAnio()"
       (change)="cambiar({ fechaDesde: $any($event.target).value })" />
   </mat-form-field>
 
-  <mat-form-field appearance="outline">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label>Hasta</mat-label>
-    <input matInput type="date" [value]="filtro().fechaHasta" [max]="hoy"
+    <input matInput type="date" [value]="filtro().fechaHasta"
+      [readonly]="filtrarPorAnio()"
       (change)="cambiar({ fechaHasta: $any($event.target).value })" />
   </mat-form-field>
 
-  <mat-form-field appearance="outline">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label>Nivel</mat-label>
     <mat-select [value]="filtro().nivel" (selectionChange)="cambiar({ nivel: $event.value })">
       <mat-option value="">Todos los niveles</mat-option>
@@ -58,7 +79,7 @@
     </mat-select>
   </mat-form-field>
 
-  <mat-form-field appearance="outline">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label>Grado</mat-label>
     <input matInput placeholder="Ej. 3" [value]="filtro().grado"
       (change)="cambiar({ grado: $any($event.target).value })"

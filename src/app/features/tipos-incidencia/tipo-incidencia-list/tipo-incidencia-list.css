@@ -43,13 +43,18 @@
 }
 
 .filtros .buscar {
-  flex: 1 1 320px;
-  min-width: 260px;
-  max-width: 480px;
+  flex: 1 1 280px;
+  min-width: 240px;
 }
 
-.filtros .filtro-select {
-  flex: 0 0 240px;
+.filtros .filtro-select.categoria {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+
+.filtros .filtro-select.gravedad {
+  flex: 0 0 200px;
+  min-width: 170px;
 }
 
 /* Contenedor de Tabla */
@@ -89,6 +94,7 @@ table {
   color: #334155;
   border: 1px solid #e2e8f0;
   display: inline-block;
+  white-space: nowrap;
 }
 
 .chip-estado {

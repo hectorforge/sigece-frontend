@@ -12,7 +12,14 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu'; 
 import { debounceTime, switchMap, tap } from 'rxjs';
-import { ESTADOS, GRAVEDADES } from '../../../core/models/enums';
+
+import { 
+  GRAVEDADES, 
+  GRAVEDAD_LABELS, 
+  ESTADOS_INCIDENTE, 
+  ESTADO_INCIDENTE_LABELS 
+} from '../../../core/models/enums';
+
 import { IncidenteFiltro } from '../../../core/models/incidente.models';
 import { FormatoReporte } from '../../../core/models/reporte.models';
 import { IncidenteApi } from '../../../core/services/incidente-api';
@@ -50,7 +57,11 @@ export class IncidenciaList {
   private auth = inject(Auth);
 
   readonly gravedades = GRAVEDADES;
-  readonly estados = ESTADOS;
+  readonly gravedadLabels = GRAVEDAD_LABELS;
+
+  readonly estados = ESTADOS_INCIDENTE;
+  readonly estadoLabels = ESTADO_INCIDENTE_LABELS;
+
   readonly columnas = ['codigo', 'fecha', 'estudiantes', 'tipo', 'gravedad', 'estado', 'responsable', 'alertas', 'acciones'];
   
   readonly puedeEditar = this.auth.tieneRol(['ROLE_TUTOR', 'ROLE_PSICOLOGO']);

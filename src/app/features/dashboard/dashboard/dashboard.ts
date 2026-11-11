@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatCheckboxModule } from '@angular/material/checkbox'; // <-- Importado
 
 import { Auth } from '../../../core/auth/auth';
 import { DashboardFiltro, Indicadores } from '../../../core/models/dashboard.models';
@@ -60,6 +61,7 @@ interface Fila {
     MatButtonModule,
     MatMenuModule,
     MatTooltipModule,
+    MatCheckboxModule, // <-- Agregado a los imports
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
@@ -77,6 +79,11 @@ export class Dashboard {
   readonly exportando = signal(false);
   readonly niveles = NIVELES;
   readonly hoy = new Date().toISOString().slice(0, 10);
+  readonly anioActual = new Date().getFullYear();
+
+  // Control para filtro por año completo
+  readonly filtrarPorAnio = signal(false);
+  readonly anioFiltro = signal(this.anioActual);
 
   filtro = signal<DashboardFiltro>({ 
     fechaDesde: `${new Date().getFullYear()}-01-01`, 
@@ -111,16 +118,32 @@ export class Dashboard {
     this.filtro.update(f => ({ ...f, ...parcial })); 
   }
 
-  // =========================================================================
-  // EXPORTACIÓN DE MÉTRICAS FILTRADAS (PDF / EXCEL)
-  // =========================================================================
+  // Métodos para el control por año
+  toggleFiltroAnio(activado: boolean): void {
+    this.filtrarPorAnio.set(activado);
+    if (activado) {
+      this.aplicarRangoAnio(this.anioFiltro());
+    }
+  }
+
+  cambiarAnio(valor: string | number): void {
+    const anio = Number(valor);
+    if (!anio || isNaN(anio)) return;
+    this.anioFiltro.set(anio);
+    this.aplicarRangoAnio(anio);
+  }
+
+  private aplicarRangoAnio(anio: number): void {
+    this.cambiar({
+      fechaDesde: `${anio}-01-01`,
+      fechaHasta: `${anio}-12-31`,
+    });
+  }
 
   exportarMetricas(formato: FormatoReporte = 'PDF'): void {
     if (!this.puedeExportar || this.exportando()) return;
 
     this.exportando.set(true);
-
-    // Se envían los filtros activos del Dashboard
     const filtrosActuales = this.filtro();
 
     this.reporteApi.exportarDashboardMetricas(formato, filtrosActuales).subscribe({

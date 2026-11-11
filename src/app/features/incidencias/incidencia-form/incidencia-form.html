@@ -1,121 +1,172 @@
-<h2>Registrar incidencia</h2>
+<header class="cabecera">
+  <div class="titulos">
+    <h2>Registrar Incidencia</h2>
+    <p class="subtitulo">
+      Registro formal del hecho según las normas de convivencia escolar y la plataforma SíSeVe.
+    </p>
+  </div>
 
+  <span class="espacio"></span>
+
+  <div class="acciones-cabecera">
+    <a mat-button routerLink="/incidencias">
+      <mat-icon>arrow_back</mat-icon>
+      Volver al listado
+    </a>
+  </div>
+</header>
+
+<!-- Estado: Cargando tipos -->
 @if (cargandoTipos()) {
-<p>Cargando tipos de incidencia...</p>
-} @else if (errorTipos()) {
-<p class="error-carga">
-    No se pudieron cargar los tipos de incidencia.
-    Verifica tu conexión o inténtalo nuevamente.
-</p>
-} @else if (tipos().length === 0) {
-<p>No hay tipos de incidencia activos disponibles.</p>
+  <div class="banner-info">
+    <mat-spinner diameter="20"></mat-spinner>
+    <span>Cargando tipos de incidencia activos...</span>
+  </div>
 }
 
-<form [formGroup]="form" (ngSubmit)="guardar()" class="grid">
-    <mat-form-field appearance="outline">
+<!-- Estado: Error cargando tipos -->
+@if (errorTipos()) {
+  <div class="banner-alerta banner-error">
+    <mat-icon>error_outline</mat-icon>
+    <div>
+      <strong>Error al cargar tipologías</strong>
+      <p>No se pudieron obtener los tipos de incidencia. Verifica tu conexión e inténtalo nuevamente.</p>
+    </div>
+  </div>
+}
+
+<!-- Estado: Sin tipos activos -->
+@if (!cargandoTipos() && !errorTipos() && tipos().length === 0) {
+  <div class="banner-alerta banner-aviso">
+    <mat-icon>warning_amber</mat-icon>
+    <div>
+      <strong>Sin tipologías activas</strong>
+      <p>No hay tipos de incidencia activos disponibles para registrar casos.</p>
+    </div>
+  </div>
+}
+
+<div class="contenedor-formulario">
+  <form [formGroup]="form" (ngSubmit)="guardar()">
+    <div class="grid">
+      
+      <!-- Tipo de Incidencia -->
+      <mat-form-field appearance="outline" class="col-6">
         <mat-label>Tipo de incidencia</mat-label>
         <mat-select formControlName="tipoIncidenciaId" (selectionChange)="alElegirTipo($event.value)">
-            @for (t of tipos(); track t.id) { <mat-option [value]="t.id">{{ t.nombre }}</mat-option> }
+          @for (t of tipos(); track t.id) {
+            <mat-option [value]="t.id">
+              <span class="opcion-tipo">{{ t.nombre }}</span>
+              <span class="opcion-categoria-tag">{{ obtenerCategoriaLabel(t.categoriaSiseve) }}</span>
+            </mat-option>
+          }
         </mat-select>
         @if (form.controls.tipoIncidenciaId.hasError('required')) {
-        <mat-error>Elige un tipo de incidencia</mat-error>
+          <mat-error>Elige un tipo de incidencia</mat-error>
         }
-    </mat-form-field>
+      </mat-form-field>
 
-    <mat-form-field appearance="outline">
+      <!-- Gravedad -->
+      <mat-form-field appearance="outline" class="col-6">
         <mat-label>Gravedad</mat-label>
         <mat-select formControlName="gravedad">
-            @for (g of gravedades; track g) { <mat-option [value]="g">{{ g.replace('_', ' ') }}</mat-option> }
+          @for (g of gravedades; track g) {
+            <mat-option [value]="g">{{ gravedadLabels[g] }}</mat-option>
+          }
         </mat-select>
         <mat-hint>Se propone según el tipo, puedes cambiarla</mat-hint>
         @if (form.controls.gravedad.hasError('required')) {
-        <mat-error>Elige la gravedad</mat-error>
+          <mat-error>Elige la gravedad</mat-error>
         }
-    </mat-form-field>
+      </mat-form-field>
 
-    <mat-form-field appearance="outline">
+      <!-- Fecha y Hora de Ocurrencia -->
+      <mat-form-field appearance="outline" class="col-6">
         <mat-label>Fecha y hora del hecho</mat-label>
         <input matInput type="datetime-local" formControlName="fechaOcurrencia" [max]="maxFecha" />
         @if (form.controls.fechaOcurrencia.hasError('required')) {
-        <mat-error>Indica cuándo ocurrió</mat-error>
+          <mat-error>Indica cuándo ocurrió</mat-error>
         }
         @if (form.controls.fechaOcurrencia.hasError('fechaFutura')) {
-        <mat-error>
-            La fecha y hora del incidente no pueden estar en el futuro.
-        </mat-error>
+          <mat-error>La fecha y hora no pueden estar en el futuro</mat-error>
         }
-
         @if (form.controls.fechaOcurrencia.hasError('fechaInvalida')) {
-        <mat-error>
-            Ingresa una fecha y hora válidas.
-        </mat-error>
+          <mat-error>Ingresa una fecha y hora válidas</mat-error>
         }
+      </mat-form-field>
 
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
+      <!-- Medio de Ocurrencia -->
+      <mat-form-field appearance="outline" class="col-6">
         <mat-label>Medio</mat-label>
         <mat-select formControlName="medioOcurrencia">
-            <mat-option value="PRESENCIAL">Presencial</mat-option>
-            <mat-option value="DIGITAL">Digital</mat-option>
+          @for (m of mediosOcurrencia; track m) {
+            <mat-option [value]="m">{{ medioLabels[m] }}</mat-option>
+          }
         </mat-select>
-    </mat-form-field>
+        @if (form.controls.medioOcurrencia.hasError('required')) {
+          <mat-error>Selecciona el medio de ocurrencia</mat-error>
+        }
+      </mat-form-field>
 
-    <mat-form-field appearance="outline" class="completo">
+      <!-- Lugar de Ocurrencia -->
+      <mat-form-field appearance="outline" class="completo">
         <mat-label>Lugar</mat-label>
-        <input matInput formControlName="lugarOcurrencia" maxlength="150"
-            placeholder="Patio, aula 3B, grupo de WhatsApp…" />
+        <input matInput formControlName="lugarOcurrencia" maxlength="150" placeholder="Patio, aula 3B, grupo de WhatsApp…" />
         @if (form.controls.lugarOcurrencia.hasError('required')) {
-        <mat-error>Indica el lugar (máximo 150 caracteres)</mat-error>
+          <mat-error>Indica el lugar (máximo 150 caracteres)</mat-error>
         }
         @if (form.controls.lugarOcurrencia.hasError('pattern')) {
-        <mat-error>El lugar no puede contener únicamente espacios.</mat-error>
+          <mat-error>El lugar no puede contener únicamente espacios</mat-error>
         }
+      </mat-form-field>
 
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="completo">
+      <!-- Descripción -->
+      <mat-form-field appearance="outline" class="completo">
         <mat-label>Descripción de lo ocurrido</mat-label>
-
-        <textarea matInput rows="6" maxlength="2000" formControlName="descripcion"></textarea>
-
-        <mat-hint align="end">
-            {{ form.controls.descripcion.value.length }}/2000
-        </mat-hint>
-
+        <textarea matInput rows="5" maxlength="2000" formControlName="descripcion" placeholder="Describe los hechos de manera objetiva..."></textarea>
+        <mat-hint align="end">{{ form.controls.descripcion.value.length }}/2000</mat-hint>
         @if (form.controls.descripcion.hasError('required')) {
-        <mat-error>Describe el hecho.</mat-error>
+          <mat-error>Describe el hecho</mat-error>
         }
-
         @if (form.controls.descripcion.hasError('pattern')) {
-        <mat-error>
-            La descripción no puede contener únicamente espacios.
-        </mat-error>
+          <mat-error>La descripción no puede contener únicamente espacios</mat-error>
         }
-
         @if (form.controls.descripcion.hasError('maxlength')) {
-        <mat-error>
-            La descripción no puede superar los 2000 caracteres.
-        </mat-error>
+          <mat-error>La descripción no puede superar los 2000 caracteres</mat-error>
         }
+      </mat-form-field>
 
-    </mat-form-field>
-
-    <mat-slide-toggle formControlName="notificarApoderado" class="completo">
-        Avisar al apoderado por WhatsApp al registrar
-    </mat-slide-toggle>
-
-    <div class="acciones completo">
-        <a mat-button routerLink="/incidencias">Cancelar</a>
-
-        <button mat-flat-button type="submit"
-            [disabled]="guardando() || cargandoTipos() || errorTipos() || tipos().length === 0">
-            @if (guardando()) {
-            Registrando incidencia...
-            } @else {
-            Registrar incidencia
-            }
-        </button>
+      <!-- Notificar al Apoderado -->
+      <div class="toggle-notificacion completo">
+        <mat-slide-toggle formControlName="notificarApoderado" color="primary">
+          <div class="toggle-label">
+            <span class="toggle-titulo">Avisar al apoderado por WhatsApp al registrar</span>
+            <span class="toggle-subtitulo">Se enviará una alerta automática informando el inicio de atención del caso.</span>
+          </div>
+        </mat-slide-toggle>
+      </div>
 
     </div>
-</form>
+
+    <!-- Acciones -->
+    <div class="acciones completo">
+      <a mat-button routerLink="/incidencias">Cancelar</a>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="guardando() || cargandoTipos() || errorTipos() || tipos().length === 0"
+        class="btn-guardar"
+      >
+        @if (guardando()) {
+          <mat-spinner diameter="18" class="spinner-btn"></mat-spinner>
+          <span>Registrando incidencia...</span>
+        } @else {
+          <mat-icon>check</mat-icon>
+          <span>Registrar incidencia</span>
+        }
+      </button>
+    </div>
+  </form>
+</div>

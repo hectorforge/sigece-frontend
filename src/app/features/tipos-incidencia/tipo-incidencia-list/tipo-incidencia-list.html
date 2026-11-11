@@ -19,6 +19,7 @@
 </header>
 
 <div class="filtros">
+  <!-- Filtro por Término -->
   <mat-form-field appearance="outline" class="buscar">
     <mat-label>Buscar por nombre o descripción</mat-label>
     <input
@@ -30,19 +31,31 @@
     <mat-icon matSuffix>search</mat-icon>
   </mat-form-field>
 
-  <mat-form-field appearance="outline" class="filtro-select">
+  <!-- Filtro por Categoría SíSeVe -->
+  <mat-form-field appearance="outline" class="filtro-select categoria">
     <mat-label>Categoría SíSeVe</mat-label>
     <mat-select [value]="categoria()" (selectionChange)="cambiarCategoria($event.value)">
       <mat-option value="">Todas las categorías</mat-option>
       @for (c of categorias; track c) {
-        <mat-option [value]="c">{{ c.replaceAll('_', ' ') }}</mat-option>
+        <mat-option [value]="c">{{ categoriaLabels[c] || c.replaceAll('_', ' ') }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <!-- Filtro por Gravedad Base -->
+  <mat-form-field appearance="outline" class="filtro-select gravedad">
+    <mat-label>Gravedad base</mat-label>
+    <mat-select [value]="gravedad()" (selectionChange)="cambiarGravedad($event.value)">
+      <mat-option value="">Todas las gravedades</mat-option>
+      @for (g of gravedades; track g) {
+        <mat-option [value]="g">{{ gravedadLabels[g] || g }}</mat-option>
       }
     </mat-select>
   </mat-form-field>
 </div>
 
 <div class="contenedor-tabla">
-  <table mat-table [dataSource]="paginados()">
+  <table mat-table [dataSource]="resultado()?.data || []">
     
     <!-- Nombre -->
     <ng-container matColumnDef="nombre">
@@ -53,14 +66,14 @@
     </ng-container>
 
     <!-- Categoría SíSeVe -->
-    <ng-container matColumnDef="categoria">
-      <th mat-header-cell *matHeaderCellDef>Categoría SíSeVe</th>
-      <td mat-cell *matCellDef="let t">
-        <span class="badge-categoria">
-          {{ t.categoriaSiseve.replaceAll('_', ' ') }}
-        </span>
-      </td>
-    </ng-container>
+  <ng-container matColumnDef="categoria">
+    <th mat-header-cell *matHeaderCellDef>Categoría SíSeVe</th>
+    <td mat-cell *matCellDef="let t">
+      <span class="badge-categoria">
+        {{ obtenerCategoriaLabel(t.categoriaSiseve) }}
+      </span>
+    </td>
+  </ng-container>
 
     <!-- Gravedad Base -->
     <ng-container matColumnDef="gravedad">
@@ -77,7 +90,7 @@
     <!-- Descripción -->
     <ng-container matColumnDef="descripcion">
       <th mat-header-cell *matHeaderCellDef>Descripción</th>
-      <td mat-cell *matCellDef="let t" class="col-descripcion">
+      <td mat-cell *matCellDef="let t" class="col-descripcion" [matTooltip]="t.descripcion">
         {{ t.descripcion || '—' }}
       </td>
     </ng-container>
@@ -121,13 +134,13 @@
     
     <tr class="mat-row" *matNoDataRow>
       <td class="vacio" [attr.colspan]="columnas.length">
-        {{ datos() ? 'No se encontraron tipos de incidencia con los filtros seleccionados.' : 'Cargando tipologías…' }}
+        {{ cargando() ? 'Cargando tipologías…' : 'No se encontraron tipos de incidencia con los filtros seleccionados.' }}
       </td>
     </tr>
   </table>
 
   <mat-paginator
-    [length]="filtrados().length"
+    [length]="resultado()?.meta?.totalElements ?? 0"
     [pageSize]="tamanioPagina()"
     [pageIndex]="pagina()"
     [pageSizeOptions]="[5, 10, 20]"

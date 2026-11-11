@@ -32,17 +32,68 @@
   flex-wrap: wrap;
 }
 
-/* Filtros */
+/* ==========================================================================
+   Filtros perfectamente alineados
+   ========================================================================== */
 .filtros {
   display: flex;
   flex-wrap: wrap;
+  align-items: center; /* Alinea exactamente al centro todos los controles */
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .filtros mat-form-field {
-  flex: 1 1 170px;
-  min-width: 170px;
+  flex: 1 1 160px;
+  min-width: 150px;
+}
+
+/* Cápsula uniforme de Por Año */
+.control-anio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px; /* Altura idéntica al mat-form-field */
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.38); /* Borde idéntico al outline de Material */
+  background: #ffffff;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.control-anio.activo {
+  border-color: #2563eb;
+  background-color: #f8faff;
+}
+
+/* Input numérico de año integrado */
+.campo-anio {
+  width: 70px;
+  height: 36px;
+  padding: 0 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  background: #ffffff;
+  outline: none;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.campo-anio:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.campo-anio:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
 }
 
 /* Tarjetas de KPIs */
