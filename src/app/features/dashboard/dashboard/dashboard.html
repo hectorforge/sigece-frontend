@@ -1,28 +1,17 @@
 <header class="cabecera">
   <h2>Dashboard de indicadores</h2>
   <span class="espacio"></span>
-
-  <!-- Botones de Exportación para Admin y Psicólogo -->
   @if (puedeExportar) {
     <button
       mat-stroked-button
       color="primary"
       [disabled]="exportando()"
-      (click)="exportarMetricas('PDF')"
-      matTooltip="Descargar reporte consolidado de indicadores en PDF"
-    >
-      <mat-icon>{{ exportando() ? 'hourglass_top' : 'picture_as_pdf' }}</mat-icon>
-      {{ exportando() ? 'Generando...' : 'Descargar PDF' }}
-    </button>
-
-    <button
-      mat-stroked-button
-      [disabled]="exportando()"
       [matMenuTriggerFor]="menuExportar"
-      matTooltip="Otras opciones de exportación"
+      matTooltip="Opciones para exportar las métricas filtradas"
     >
-      <mat-icon>file_download</mat-icon>
-      Exportar <mat-icon>arrow_drop_down</mat-icon>
+      <mat-icon>{{ exportando() ? 'hourglass_top' : 'file_download' }}</mat-icon>
+      {{ exportando() ? 'Generando...' : 'Exportar métricas' }}
+      <mat-icon>arrow_drop_down</mat-icon>
     </button>
 
     <mat-menu #menuExportar="matMenu">

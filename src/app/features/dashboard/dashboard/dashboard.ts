@@ -112,7 +112,7 @@ export class Dashboard {
   }
 
   // =========================================================================
-  // EXPORTACIÓN DE MÉTRICAS (PDF / EXCEL)
+  // EXPORTACIÓN DE MÉTRICAS FILTRADAS (PDF / EXCEL)
   // =========================================================================
 
   exportarMetricas(formato: FormatoReporte = 'PDF'): void {
@@ -120,12 +120,15 @@ export class Dashboard {
 
     this.exportando.set(true);
 
-    this.reporteApi.exportarDashboardMetricas(formato).subscribe({
+    // Se envían los filtros activos del Dashboard
+    const filtrosActuales = this.filtro();
+
+    this.reporteApi.exportarDashboardMetricas(formato, filtrosActuales).subscribe({
       next: () => {
         this.exportando.set(false);
         this.alert.exito(
           'Reporte descargado',
-          `El consolidado de métricas en formato ${formato} se generó correctamente.`
+          `El consolidado de métricas en formato ${formato} se generó con los filtros aplicados.`
         );
       },
       error: (err) => {

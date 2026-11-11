@@ -1,5 +1,31 @@
 <div class="cab">
   <h2>Incidencias</h2>
+  <span class="espacio"></span>
+
+  @if (esAdmin) {
+    <button
+      mat-stroked-button
+      [disabled]="exportandoLibro()"
+      [matMenuTriggerFor]="menuExportarLibro"
+      matTooltip="Descargar Libro Oficial de Incidencias (D.S. N.° 004-2018-MINEDU)"
+    >
+      <mat-icon>{{ exportandoLibro() ? 'hourglass_top' : 'menu_book' }}</mat-icon>
+      {{ exportandoLibro() ? 'Generando...' : 'Libro de Incidencias' }}
+      <mat-icon>arrow_drop_down</mat-icon>
+    </button>
+
+    <mat-menu #menuExportarLibro="matMenu">
+      <button mat-menu-item (click)="exportarLibro('PDF')">
+        <mat-icon color="warn">picture_as_pdf</mat-icon>
+        <span>Libro en PDF</span>
+      </button>
+      <button mat-menu-item (click)="exportarLibro('EXCEL')">
+        <mat-icon style="color: #2e7d32;">table_view</mat-icon>
+        <span>Libro en Excel (.xlsx)</span>
+      </button>
+    </mat-menu>
+  }
+
   @if (puedeEditar) {
     <a mat-flat-button routerLink="/incidencias/nueva"><mat-icon>add</mat-icon> Registrar incidencia</a>
   }
