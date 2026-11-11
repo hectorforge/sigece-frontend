@@ -1,10 +1,43 @@
-<div class="cab">
-  <h2>Derivaciones a SíSeVe</h2>
-</div>
+<header class="cabecera">
+  <div class="titulos">
+    <h2>Derivaciones a SíSeVe</h2>
+    <p class="subtitulo">
+      Padrón de control y elevación obligatoria de casos de violencia grave al portal SíSeVe del MINEDU.
+    </p>
+  </div>
+
+  <span class="espacio"></span>
+
+  <div class="acciones-cabecera">
+    @if (esAdmin) {
+      <button
+        mat-stroked-button
+        [disabled]="exportandoDerivaciones()"
+        [matMenuTriggerFor]="menuExportar"
+        matTooltip="Descargar padrón oficial de derivaciones"
+      >
+        <mat-icon>{{ exportandoDerivaciones() ? 'hourglass_top' : 'file_download' }}</mat-icon>
+        {{ exportandoDerivaciones() ? 'Exportando...' : 'Exportar Padrón' }}
+        <mat-icon>arrow_drop_down</mat-icon>
+      </button>
+
+      <mat-menu #menuExportar="matMenu">
+        <button mat-menu-item (click)="exportarDerivaciones('PDF')">
+          <mat-icon color="warn">picture_as_pdf</mat-icon>
+          <span>Padrón en PDF</span>
+        </button>
+        <button mat-menu-item (click)="exportarDerivaciones('EXCEL')">
+          <mat-icon style="color: #2e7d32;">table_view</mat-icon>
+          <span>Padrón en Excel (.xlsx)</span>
+        </button>
+      </mat-menu>
+    }
+  </div>
+</header>
 
 <div class="filtros">
   <!-- Selector de Bandeja -->
-  <mat-form-field appearance="outline">
+  <mat-form-field appearance="outline" class="filtro-bandeja">
     <mat-label>Bandeja</mat-label>
     <mat-select [value]="bandeja()" (selectionChange)="cambiarBandeja($event.value)">
       <mat-option value="PENDIENTES">Pendientes de derivar</mat-option>
@@ -15,13 +48,13 @@
   <!-- Buscador general -->
   <mat-form-field appearance="outline" class="buscar">
     <mat-label>Buscar por código o detalle</mat-label>
-    <input matInput [value]="filtro().texto" (input)="cambiar({ texto: $any($event.target).value })" />
+    <input matInput [value]="filtro().texto" (input)="cambiar({ texto: $any($event.target).value })" placeholder="Ej. INC-2026-001..." />
     <mat-icon matSuffix>search</mat-icon>
   </mat-form-field>
 
   <!-- Filtros específicos cuando está en PENDIENTES -->
   @if (bandeja() === 'PENDIENTES') {
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="filtro-select">
       <mat-label>Gravedad</mat-label>
       <mat-select (selectionChange)="cambiar({ gravedad: $event.value })" [value]="filtro().gravedad">
         <mat-option value="">Todas</mat-option>
@@ -31,7 +64,7 @@
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="filtro-select">
       <mat-label>Plazo</mat-label>
       <mat-select (selectionChange)="cambiar({ urgente: $event.value })" [value]="filtro().urgente">
         <mat-option value="">Todos</mat-option>
@@ -40,41 +73,17 @@
       </mat-select>
     </mat-form-field>
   }
-
-  @if (esAdmin) {
-    <button
-      mat-stroked-button
-      color="primary"
-      [disabled]="exportandoDerivaciones()"
-      [matMenuTriggerFor]="menuExportar"
-    >
-      <mat-icon>{{ exportandoDerivaciones() ? 'hourglass_top' : 'file_download' }}</mat-icon>
-      {{ exportandoDerivaciones() ? 'Exportando...' : 'Exportar Padrón' }}
-      <mat-icon>arrow_drop_down</mat-icon>
-    </button>
-  
-    <mat-menu #menuExportar="matMenu">
-      <button mat-menu-item (click)="exportarDerivaciones('PDF')">
-        <mat-icon>picture_as_pdf</mat-icon>
-        <span>Descargar en PDF</span>
-      </button>
-      <button mat-menu-item (click)="exportarDerivaciones('EXCEL')">
-        <mat-icon>table_view</mat-icon>
-        <span>Descargar en Excel</span>
-      </button>
-    </mat-menu>
-  }
 </div>
 
-<div class="tabla mat-elevation-z1">
+<div class="contenedor-tabla">
   <!-- ================= TABLA 1: PENDIENTES DE DERIVAR ================= -->
   @if (bandeja() === 'PENDIENTES') {
     <table mat-table [dataSource]="pendientesPaginados()">
       <!-- Código Caso -->
       <ng-container matColumnDef="codigo">
         <th mat-header-cell *matHeaderCellDef>Código Caso</th>
-        <td mat-cell *matCellDef="let i">
-          <strong>{{ i.codigoCaso }}</strong>
+        <td mat-cell *matCellDef="let i" class="col-codigo">
+          {{ i.codigoCaso }}
         </td>
       </ng-container>
 
@@ -107,7 +116,7 @@
           @if (i.diasTranscurridos === 0) {
             <span class="plazo-hoy">Hoy</span>
           } @else {
-            <span class="sin">{{ i.diasTranscurridos }} d</span>
+            <span class="plazo-dias">{{ i.diasTranscurridos }} d</span>
           }
         </td>
       </ng-container>
@@ -117,19 +126,19 @@
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let i">
           @if (i.diasTranscurridos >= 1) {
-            <mat-icon class="reinc" title="Supera las 24h recomendadas para elevación">warning</mat-icon>
+            <mat-icon class="reinc" matTooltip="Supera las 24h recomendadas para elevación">warning</mat-icon>
           }
         </td>
       </ng-container>
 
       <!-- Acciones -->
       <ng-container matColumnDef="acciones">
-        <th mat-header-cell *matHeaderCellDef class="text-end">Acciones</th>
-        <td mat-cell *matCellDef="let i" class="col-acciones text-end">
+        <th mat-header-cell *matHeaderCellDef class="col-acciones">Acciones</th>
+        <td mat-cell *matCellDef="let i" class="col-acciones">
           <button
             mat-icon-button
-            class="btn-ver"
-            title="Ver evaluación legal"
+            class="btn-accion"
+            matTooltip="Ver evaluación legal MINEDU"
             [disabled]="evaluandoId() === i.incidenteId"
             (click)="abrirEvaluacion(i)"
           >
@@ -145,7 +154,7 @@
       <tr mat-row *matRowDef="let fila; columns: columnasPendientes"></tr>
       <tr class="mat-row" *matNoDataRow>
         <td class="vacio" [attr.colspan]="columnasPendientes.length">
-          {{ cargando() ? 'Cargando incidentes…' : 'Sin incidentes pendientes de derivación' }}
+          {{ cargando() ? 'Cargando incidentes…' : 'Sin incidentes pendientes de derivación.' }}
         </td>
       </tr>
     </table>
@@ -157,8 +166,8 @@
       <!-- Código Caso -->
       <ng-container matColumnDef="codigo">
         <th mat-header-cell *matHeaderCellDef>Código Caso</th>
-        <td mat-cell *matCellDef="let d">
-          <strong>{{ d.codigoCaso }}</strong>
+        <td mat-cell *matCellDef="let d" class="col-codigo">
+          {{ d.codigoCaso }}
         </td>
       </ng-container>
 
@@ -185,28 +194,28 @@
       <!-- Observaciones -->
       <ng-container matColumnDef="observaciones">
         <th mat-header-cell *matHeaderCellDef>Observaciones</th>
-        <td mat-cell *matCellDef="let d">{{ d.observacionesSiseve || 'Sin observaciones' }}</td>
+        <td mat-cell *matCellDef="let d" class="col-obs">{{ d.observacionesSiseve || 'Sin observaciones' }}</td>
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="columnasDerivadas"></tr>
       <tr mat-row *matRowDef="let fila; columns: columnasDerivadas"></tr>
       <tr class="mat-row" *matNoDataRow>
         <td class="vacio" [attr.colspan]="columnasDerivadas.length">
-          {{ cargando() ? 'Cargando casos derivados…' : 'Aún no hay casos derivados' }}
+          {{ cargando() ? 'Cargando casos derivados…' : 'Aún no se han registrado casos derivados.' }}
         </td>
       </tr>
     </table>
   }
-</div>
 
-<mat-paginator
-  [length]="totalElementos()"
-  [pageSize]="filtro().tamano"
-  [pageIndex]="filtro().pagina"
-  [pageSizeOptions]="[5, 10, 25]"
-  (page)="paginar($event)"
-  showFirstLastButtons
-/>
+  <mat-paginator
+    [length]="totalElementos()"
+    [pageSize]="filtro().tamano"
+    [pageIndex]="filtro().pagina"
+    [pageSizeOptions]="[5, 10, 25]"
+    (page)="paginar($event)"
+    showFirstLastButtons
+  />
+</div>
 
 <!-- ================= MODAL DE EVALUACIÓN ================= -->
 @if (casoAEvaluar(); as ev) {
@@ -255,7 +264,7 @@
 
         <mat-form-field appearance="outline" class="w-full">
           <mat-label>Observaciones (Opcional)</mat-label>
-          <textarea matInput rows="3" formControlName="observacionesSiseve"></textarea>
+          <textarea matInput rows="3" formControlName="observacionesSiseve" placeholder="Detalles de la elevación..."></textarea>
         </mat-form-field>
 
         <div class="acciones-modal">

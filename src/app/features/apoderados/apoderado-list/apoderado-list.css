@@ -1,39 +1,132 @@
-.cab {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* Cabecera Estandarizada */
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
+.titulos h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.subtitulo {
+  margin: 4px 0 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.espacio {
+  flex: 1 1 auto;
+}
+
+.acciones-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Filtros */
 .filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-/* El buscador crece y ocupa el espacio disponible */
 .filtros .buscar {
-    flex: 1 1 320px;
-    min-width: 280px;
-    max-width: 480px;
+  flex: 1 1 320px;
+  min-width: 260px;
+  max-width: 480px;
 }
 
-/* El select no necesita tanto */
-.filtros .tipo {
-    flex: 0 0 220px;
+.filtros .filtro-select {
+  flex: 0 0 200px;
 }
 
-.tabla {
-    overflow-x: auto;
-    background: var(--mat-sys-surface);
-    border-radius: 12px;
+/* Contenedor de Tabla */
+.contenedor-tabla {
+  background: var(--mat-sys-surface, #ffffff);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
+table {
+  width: 100%;
+}
+
+.col-documento {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.tipo-doc {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mat-sys-primary, #1e40af);
+  background: #eff6ff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+
+.col-nombre {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.dato-contacto {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.icono-contacto {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #64748b;
+}
+
+.sin-dato {
+  color: #94a3b8;
+}
+
+/* Columna de Acciones */
+.col-acciones {
+  white-space: nowrap;
+  text-align: right;
+  padding-right: 16px;
+}
+
+.btn-accion {
+  color: #475569;
+  transition: all 0.2s ease;
+}
+
+.btn-accion:hover {
+  background: #f1f5f9;
+}
+
+/* Fila vacía */
 .vacio {
-    text-align: center;
-    padding: 24px;
+  text-align: center;
+  padding: 36px 16px;
+  color: #64748b;
+  font-size: 14px;
 }
 
 mat-paginator {
-    margin-top: 12px;
-    margin-bottom: 24px;
+  border-top: 1px solid #f1f5f9;
 }

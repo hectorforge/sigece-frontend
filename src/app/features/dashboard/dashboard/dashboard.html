@@ -1,30 +1,38 @@
 <header class="cabecera">
-  <h2>Dashboard de indicadores</h2>
-  <span class="espacio"></span>
-  @if (puedeExportar) {
-    <button
-      mat-stroked-button
-      color="primary"
-      [disabled]="exportando()"
-      [matMenuTriggerFor]="menuExportar"
-      matTooltip="Opciones para exportar las métricas filtradas"
-    >
-      <mat-icon>{{ exportando() ? 'hourglass_top' : 'file_download' }}</mat-icon>
-      {{ exportando() ? 'Generando...' : 'Exportar métricas' }}
-      <mat-icon>arrow_drop_down</mat-icon>
-    </button>
+  <div class="titulos">
+    <h2>Dashboard de Indicadores</h2>
+    <p class="subtitulo">
+      Monitoreo analítico, métricas de resolución y distribución estadística de la convivencia escolar.
+    </p>
+  </div>
 
-    <mat-menu #menuExportar="matMenu">
-      <button mat-menu-item (click)="exportarMetricas('PDF')">
-        <mat-icon color="warn">picture_as_pdf</mat-icon>
-        <span>Consolidado en PDF</span>
+  <span class="espacio"></span>
+
+  <div class="acciones-cabecera">
+    @if (puedeExportar) {
+      <button
+        mat-stroked-button
+        [disabled]="exportando()"
+        [matMenuTriggerFor]="menuExportar"
+        matTooltip="Descargar consolidado de indicadores filtrados"
+      >
+        <mat-icon>{{ exportando() ? 'hourglass_top' : 'file_download' }}</mat-icon>
+        {{ exportando() ? 'Generando...' : 'Exportar métricas' }}
+        <mat-icon>arrow_drop_down</mat-icon>
       </button>
-      <button mat-menu-item (click)="exportarMetricas('EXCEL')">
-        <mat-icon style="color: #2e7d32;">table_view</mat-icon>
-        <span>Métricas en Excel (.xlsx)</span>
-      </button>
-    </mat-menu>
-  }
+
+      <mat-menu #menuExportar="matMenu">
+        <button mat-menu-item (click)="exportarMetricas('PDF')">
+          <mat-icon color="warn">picture_as_pdf</mat-icon>
+          <span>Consolidado en PDF</span>
+        </button>
+        <button mat-menu-item (click)="exportarMetricas('EXCEL')">
+          <mat-icon style="color: #2e7d32;">table_view</mat-icon>
+          <span>Métricas en Excel (.xlsx)</span>
+        </button>
+      </mat-menu>
+    }
+  </div>
 </header>
 
 <div class="filtros">
@@ -43,7 +51,7 @@
   <mat-form-field appearance="outline">
     <mat-label>Nivel</mat-label>
     <mat-select [value]="filtro().nivel" (selectionChange)="cambiar({ nivel: $event.value })">
-      <mat-option value="">Todos</mat-option>
+      <mat-option value="">Todos los niveles</mat-option>
       @for (n of niveles; track n) { 
         <mat-option [value]="n">{{ n }}</mat-option> 
       }
@@ -61,38 +69,46 @@
 @if (datos(); as d) {
   <div class="kpis">
     <mat-card class="kpi">
-      <mat-icon>folder_open</mat-icon>
+      <div class="kpi-icono">
+        <mat-icon>folder_open</mat-icon>
+      </div>
       <strong>{{ d.totalIncidentes }}</strong>
-      <span>Incidentes</span>
+      <span>Incidentes registrados</span>
     </mat-card>
 
     <mat-card class="kpi">
-      <mat-icon>send</mat-icon>
+      <div class="kpi-icono derivado">
+        <mat-icon>send</mat-icon>
+      </div>
       <strong>{{ d.totalDerivadosSiseve }}</strong>
       <span>Derivados a SíSeVe</span>
     </mat-card>
 
     <mat-card class="kpi">
-      <mat-icon>task_alt</mat-icon>
+      <div class="kpi-icono cerrado">
+        <mat-icon>task_alt</mat-icon>
+      </div>
       <strong>{{ d.totalCerrados }}</strong>
-      <span>Cerrados</span>
+      <span>Casos cerrados</span>
     </mat-card>
 
     <mat-card class="kpi">
-      <mat-icon>percent</mat-icon>
+      <div class="kpi-icono resolucion">
+        <mat-icon>percent</mat-icon>
+      </div>
       <strong>{{ d.porcentajeResolucion }}%</strong>
-      <span>Resolución</span>
+      <span>Tasa de resolución</span>
     </mat-card>
   </div>
 
   <div class="paneles">
     <mat-card class="panel">
-      <h3>Por gravedad</h3>
+      <h3>Distribución por gravedad</h3>
       <ng-container *ngTemplateOutlet="barras; context: { $implicit: gravedad() }" />
     </mat-card>
 
     <mat-card class="panel">
-      <h3>Por estado</h3>
+      <h3>Distribución por estado</h3>
       <ng-container *ngTemplateOutlet="barras; context: { $implicit: estado() }" />
     </mat-card>
 
@@ -102,26 +118,32 @@
     </mat-card>
 
     <mat-card class="panel">
-      <h3>Por mes</h3>
+      <h3>Incidencias por mes</h3>
       <ng-container *ngTemplateOutlet="barras; context: { $implicit: mes() }" />
     </mat-card>
   </div>
 } @else if (error()) {
-  <p class="msg">No se pudieron cargar los indicadores. Revise los filtros e intente nuevamente.</p>
+  <div class="estado-mensaje error">
+    <mat-icon>error_outline</mat-icon>
+    <p>No se pudieron cargar los indicadores. Revise los filtros e intente nuevamente.</p>
+  </div>
 } @else {
-  <p class="msg">Cargando…</p>
+  <div class="estado-mensaje">
+    <mat-icon>hourglass_top</mat-icon>
+    <p>Cargando indicadores analíticos…</p>
+  </div>
 }
 
 <ng-template #barras let-filas>
   @for (f of filas; track f.etiqueta) {
     <div class="fila">
-      <span class="eti">{{ f.etiqueta }}</span>
+      <span class="eti" [matTooltip]="f.etiqueta">{{ f.etiqueta }}</span>
       <div class="barra">
         <div class="relleno" [style.width.%]="f.ancho" [style.background]="f.color"></div>
       </div>
       <span class="val">{{ f.valor }}</span>
     </div>
   } @empty {
-    <p class="vacio">Sin datos en el período</p>
+    <p class="vacio">Sin registros en el período seleccionado.</p>
   }
 </ng-template>

@@ -1,83 +1,116 @@
-.filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-
-.filtros .buscar {
-    flex: 1 1 320px;
-    min-width: 200px;
-    max-width: 435px;
-}
-
-.filtros .tipo {
-    flex: 0 0 220px;
-}
-
-.tabla {
-    overflow-x: auto;
-    background: var(--mat-sys-surface);
-    border-radius: 12px;
-}
-
-.sin {
-    color: var(--mat-sys-error);
-    font-size: 13px;
-    font-weight: 500;
-}
-
-.reinc {
-    color: #ef6c00;
-}
-
-.vacio {
-    text-align: center;
-    padding: 24px;
-}
-
-.btn-ver {
-    width: 40px;
-    height: 40px;
-    padding: 8px;
-    border: 1px solid #eceef2;
-    border-radius: 50%;
-    background: #f5f6f8;
-}
-
-.btn-ver .mat-mdc-button-persistent-ripple,
-.btn-ver .mat-mdc-button-persistent-ripple::before,
-.btn-ver .mat-mdc-button-ripple,
-.btn-ver .mat-focus-indicator::before {
-    border-radius: 50%;
-}
-
-.btn-ver:hover {
-    background: #eceef2;
-}
-
-.btn-ver:focus-visible {
-    outline: 2px solid #1a73e8;
-    outline-offset: 2px;
-}
-
-.cab {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.cab {
+/* Cabecera Estandarizada */
+.cabecera {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
+}
+
+.titulos h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.subtitulo {
+  margin: 4px 0 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
 }
 
 .espacio {
   flex: 1 1 auto;
 }
+
+.acciones-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Filtros */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.filtros .buscar {
+  flex: 1 1 320px;
+  min-width: 240px;
+  max-width: 450px;
+}
+
+.filtros mat-form-field {
+  min-width: 170px;
+}
+
+/* Contenedor de Tabla */
+.contenedor-tabla {
+  background: var(--mat-sys-surface, #ffffff);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+table {
+  width: 100%;
+}
+
+.col-codigo {
+  font-weight: 600;
+  color: var(--mat-sys-primary, #1e40af);
+}
+
+.col-estudiantes {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.col-acciones {
+  text-align: right;
+  padding-right: 16px;
+}
+
+/* Estados y alertas */
+.sin {
+  color: #94a3b8;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.reinc {
+  color: #f97316;
+  font-size: 20px;
+  vertical-align: middle;
+}
+
+.vacio {
+  text-align: center;
+  padding: 36px 16px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* Botón Ver Detalle */
+.btn-ver {
+  color: #475569;
+  transition: all 0.2s ease;
+}
+
+.btn-ver:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
 mat-paginator {
-    margin-top: 12px;
-    margin-bottom: 24px;
+  border-top: 1px solid #f1f5f9;
 }

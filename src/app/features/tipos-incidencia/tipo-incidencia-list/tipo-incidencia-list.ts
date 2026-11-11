@@ -17,6 +17,7 @@ import { TipoIncidenciaApi } from '../../../core/services/tipo-incidencia-api';
 import { AlertService } from '../../../core/services/alert.service';
 import { TipoIncidenciaForm } from '../tipo-incidencia-form/tipo-incidencia-form';
 import { GravedadChip } from '../../../shared/gravedad-chip/gravedad-chip';
+import { MatTooltip } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-tipo-incidencia-list',
@@ -30,6 +31,7 @@ import { GravedadChip } from '../../../shared/gravedad-chip/gravedad-chip';
     MatButtonModule,
     MatIconModule,
     GravedadChip,
+    MatTooltip
   ],
   templateUrl: './tipo-incidencia-list.html',
   styleUrl: './tipo-incidencia-list.css',

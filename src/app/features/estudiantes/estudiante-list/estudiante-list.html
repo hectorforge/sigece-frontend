@@ -1,12 +1,22 @@
-<div class="cab">
-  <h2>Padrón de Estudiantes</h2>
-  @if (puedeEditar) {
-    <button mat-flat-button color="primary" (click)="abrirForm(null)">
-      <mat-icon>person_add</mat-icon>
-      Nuevo estudiante
-    </button>
-  }
-</div>
+<header class="cabecera">
+  <div class="titulos">
+    <h2>Padrón de Estudiantes</h2>
+    <p class="subtitulo">
+      Directorio institucional de matrícula, asignación de aulas y estado académico (SIAGIE).
+    </p>
+  </div>
+
+  <span class="espacio"></span>
+
+  <div class="acciones-cabecera">
+    @if (puedeEditar) {
+      <button mat-flat-button color="primary" (click)="abrirForm(null)">
+        <mat-icon>person_add</mat-icon>
+        Nuevo estudiante
+      </button>
+    }
+  </div>
+</header>
 
 <!-- Barra completa de filtros de búsqueda -->
 <div class="filtros">
@@ -23,7 +33,7 @@
   </mat-form-field>
 
   <!-- 2. Nivel educativo -->
-  <mat-form-field appearance="outline" class="tipo">
+  <mat-form-field appearance="outline" class="filtro-select">
     <mat-label>Nivel</mat-label>
     <mat-select [value]="filtro().nivel" (selectionChange)="cambiar({ nivel: $event.value })">
       <mat-option value="">Todos los niveles</mat-option>
@@ -34,7 +44,7 @@
   </mat-form-field>
 
   <!-- 3. Grado -->
-  <mat-form-field appearance="outline" class="corto">
+  <mat-form-field appearance="outline" class="filtro-corto">
     <mat-label>Grado</mat-label>
     <input
       matInput
@@ -45,18 +55,18 @@
   </mat-form-field>
 
   <!-- 4. Sección -->
-  <mat-form-field appearance="outline" class="corto">
+  <mat-form-field appearance="outline" class="filtro-corto">
     <mat-label>Sección</mat-label>
     <input
       matInput
       [value]="filtro().seccion ?? ''"
       (input)="cambiar({ seccion: $any($event.target).value })"
-      placeholder="Ej. A, B, U"
+      placeholder="Ej. A, B"
     />
   </mat-form-field>
 
   <!-- 5. Año Escolar -->
-  <mat-form-field appearance="outline" class="medio">
+  <mat-form-field appearance="outline" class="filtro-medio">
     <mat-label>Año Escolar</mat-label>
     <input
       matInput
@@ -69,7 +79,7 @@
   </mat-form-field>
 
   <!-- 6. Estado (Activo / Inactivo / Todos) -->
-  <mat-form-field appearance="outline" class="tipo">
+  <mat-form-field appearance="outline" class="filtro-select">
     <mat-label>Estado</mat-label>
     <mat-select [value]="filtro().activo" (selectionChange)="cambiar({ activo: $event.value })">
       <mat-option [value]="''">Todos los estados</mat-option>
@@ -78,7 +88,7 @@
     </mat-select>
   </mat-form-field>
 
-  <!-- Botón para limpiar filtros si hay alguno modificado -->
+  <!-- Botón para limpiar filtros -->
   @if (filtro().termino || filtro().nivel || filtro().grado || filtro().seccion || filtro().activo !== true || filtro().anioEscolar !== anioActual) {
     <button mat-button color="warn" class="btn-limpiar" (click)="limpiarFiltros()" matTooltip="Restablecer filtros">
       <mat-icon>filter_alt_off</mat-icon>
@@ -87,22 +97,22 @@
   }
 </div>
 
-<!-- Tabla de estudiantes -->
-<div class="tabla">
+<!-- Contenedor estandarizado de tabla -->
+<div class="contenedor-tabla">
   <table mat-table [dataSource]="resultado()?.content ?? []">
     
     <!-- Código SIAGIE -->
     <ng-container matColumnDef="codigo">
       <th mat-header-cell *matHeaderCellDef>Código SIAGIE</th>
-      <td mat-cell *matCellDef="let e">
-        <strong>{{ e.codigoSiagie }}</strong>
+      <td mat-cell *matCellDef="let e" class="col-codigo">
+        {{ e.codigoSiagie }}
       </td>
     </ng-container>
 
     <!-- Nombres y Apellidos -->
     <ng-container matColumnDef="nombre">
       <th mat-header-cell *matHeaderCellDef>Estudiante</th>
-      <td mat-cell *matCellDef="let e">
+      <td mat-cell *matCellDef="let e" class="col-estudiante">
         {{ e.apellidos }}, {{ e.nombres }}
       </td>
     </ng-container>
@@ -121,7 +131,7 @@
     <ng-container matColumnDef="estado">
       <th mat-header-cell *matHeaderCellDef>Estado</th>
       <td mat-cell *matCellDef="let e">
-        <span class="est" [class.off]="!e.activo">
+        <span class="chip-estado" [class.inactivo]="!e.activo">
           {{ e.activo ? 'Activo' : 'Inactivo' }}
         </span>
       </td>
@@ -129,10 +139,10 @@
 
     <!-- Acciones -->
     <ng-container matColumnDef="acciones">
-      <th mat-header-cell *matHeaderCellDef class="acciones-cell"></th>
-      <td mat-cell *matCellDef="let e" class="acciones-cell">
+      <th mat-header-cell *matHeaderCellDef class="col-acciones"></th>
+      <td mat-cell *matCellDef="let e" class="col-acciones">
         <!-- Ver Ficha -->
-        <a mat-icon-button [routerLink]="['/estudiantes', e.id]" matTooltip="Ver ficha">
+        <a mat-icon-button class="btn-accion" [routerLink]="['/estudiantes', e.id]" matTooltip="Ver ficha completa">
           <mat-icon>visibility</mat-icon>
         </a>
 
@@ -140,21 +150,22 @@
           <!-- Asignar / Cambiar Aula -->
           <button 
             mat-icon-button 
-            color="accent" 
+            class="btn-accion"
             matTooltip="Asignar o cambiar de aula" 
             (click)="abrirAsignarAula(e)"
           >
-            <mat-icon>meeting_room</mat-icon>
+            <mat-icon color="primary">meeting_room</mat-icon>
           </button>
 
           <!-- Editar Datos Personales -->
-          <button mat-icon-button matTooltip="Editar estudiante" (click)="abrirForm(e)">
+          <button mat-icon-button class="btn-accion" matTooltip="Editar estudiante" (click)="abrirForm(e)">
             <mat-icon>edit</mat-icon>
           </button>
 
           <!-- Desactivar / Reactivar -->
           <button 
             mat-icon-button 
+            class="btn-accion"
             (click)="alternar(e)" 
             [matTooltip]="e.activo ? 'Desactivar estudiante' : 'Reactivar estudiante'"
           >
@@ -166,6 +177,7 @@
           <!-- Eliminar -->
           <button 
             mat-icon-button 
+            class="btn-accion"
             color="warn" 
             matTooltip="Eliminar estudiante" 
             (click)="eliminar(e)"
@@ -180,16 +192,16 @@
     <tr mat-row *matRowDef="let fila; columns: columnas"></tr>
     <tr class="mat-row" *matNoDataRow>
       <td class="vacio" [attr.colspan]="columnas.length">
-        {{ resultado() ? 'No se encontraron estudiantes con los filtros aplicados' : 'Cargando padrón…' }}
+        {{ resultado() ? 'No se encontraron estudiantes con los filtros aplicados.' : 'Cargando padrón escolar…' }}
       </td>
     </tr>
   </table>
-</div>
 
-<mat-paginator
-  [length]="resultado()?.totalElements ?? 0"
-  [pageSize]="filtro().size"
-  [pageIndex]="filtro().page"
-  [pageSizeOptions]="[5, 10, 25, 50]"
-  (page)="paginar($event)"
-/>
+  <mat-paginator
+    [length]="resultado()?.totalElements ?? 0"
+    [pageSize]="filtro().size"
+    [pageIndex]="filtro().page"
+    [pageSizeOptions]="[5, 10, 25, 50]"
+    (page)="paginar($event)"
+  />
+</div>

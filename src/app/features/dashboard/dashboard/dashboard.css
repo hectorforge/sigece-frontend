@@ -1,110 +1,194 @@
+/* Cabecera Estandarizada */
 .cabecera {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
-.cabecera h2 {
+.titulos h2 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
   color: #1e293b;
 }
 
+.subtitulo {
+  margin: 4px 0 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
 .espacio {
   flex: 1 1 auto;
 }
 
+.acciones-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Filtros */
 .filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .filtros mat-form-field {
-    min-width: 170px;
+  flex: 1 1 170px;
+  min-width: 170px;
 }
 
+/* Tarjetas de KPIs */
 .kpis {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-    gap: 16px;
-    margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .kpi {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: var(--mat-sys-surface, #ffffff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
-.kpi mat-icon {
-    color: var(--mat-sys-primary);
+.kpi-icono {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  color: #2563eb;
+  margin-bottom: 8px;
+}
+
+.kpi-icono.derivado {
+  background: #fdf2f8;
+  color: #db2777;
+}
+
+.kpi-icono.cerrado {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.kpi-icono.resolucion {
+  background: #f5f3ff;
+  color: #7c3aed;
 }
 
 .kpi strong {
-    font-size: 28px;
-    line-height: 1.1;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #0f172a;
 }
 
 .kpi span {
-    font-size: 13px;
-    opacity: .7;
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
 }
 
+/* Paneles de Gráficos / Barras */
 .paneles {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 16px;
 }
 
 .panel {
-    padding: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: var(--mat-sys-surface, #ffffff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .panel h3 {
-    margin: 0 0 12px;
-    font-size: 16px;
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
 }
 
+/* Filas de Barras */
 .fila {
-    display: grid;
-    grid-template-columns: 130px 1fr 36px;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    font-size: 13px;
+  display: grid;
+  grid-template-columns: 140px 1fr 40px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
 }
 
 .eti {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #475569;
+  font-weight: 500;
 }
 
 .barra {
-    background: var(--mat-sys-surface-container-high);
-    border-radius: 6px;
-    height: 14px;
-    overflow: hidden;
+  background: #f1f5f9;
+  border-radius: 6px;
+  height: 12px;
+  overflow: hidden;
 }
 
 .relleno {
-    height: 100%;
-    border-radius: 6px;
-    min-width: 2px;
+  height: 100%;
+  border-radius: 6px;
+  min-width: 3px;
+  transition: width 0.4s ease-out;
 }
 
 .val {
-    text-align: right;
-    font-weight: 600;
+  text-align: right;
+  font-weight: 600;
+  color: #1e293b;
 }
 
-.vacio,
-.msg {
-    opacity: .7;
+.vacio {
+  text-align: center;
+  padding: 28px 16px;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+/* Estados de Carga y Error */
+.estado-mensaje {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  color: #64748b;
+  gap: 12px;
+}
+
+.estado-mensaje mat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+.estado-mensaje.error {
+  color: #dc2626;
 }

@@ -1,85 +1,122 @@
-<div class="cab">
-    <h2>Apoderados</h2>
+<header class="cabecera">
+  <div class="titulos">
+    <h2>Directorio de Apoderados</h2>
+    <p class="subtitulo">
+      Gestión de padres de familia, tutores legales y canales de comunicación institucional.
+    </p>
+  </div>
+
+  <span class="espacio"></span>
+
+  <div class="acciones-cabecera">
     @if (puedeEditar) {
-    <button mat-flat-button (click)="abrirForm(null)">
-        <mat-icon>add</mat-icon> Nuevo apoderado
-    </button>
+      <button mat-flat-button color="primary" (click)="abrirForm(null)">
+        <mat-icon>person_add</mat-icon>
+        Nuevo apoderado
+      </button>
     }
-</div>
+  </div>
+</header>
 
 <div class="filtros">
-    <mat-form-field appearance="outline" class="buscar">
-        <mat-label>Buscar por nombre o documento</mat-label>
-        <input matInput (input)="cambiar({ termino: $any($event.target).value })" />
-        <mat-icon matSuffix>search</mat-icon>
-    </mat-form-field>
+  <mat-form-field appearance="outline" class="buscar">
+    <mat-label>Buscar por nombre o número de documento</mat-label>
+    <input
+      matInput
+      placeholder="Ej. Juan Pérez o 47852196"
+      (input)="cambiar({ termino: $any($event.target).value })"
+    />
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
 
-    <mat-form-field appearance="outline" class="tipo">
-        <mat-label>Tipo de documento</mat-label>
-        <mat-select value="" (selectionChange)="cambiar({ tipoDocumento: $event.value })">
-            <mat-option value="">Todos</mat-option>
-            @for (t of tipos; track t) { 
-                <mat-option [value]="t">{{ t }}</mat-option> 
-            }
-        </mat-select>
-    </mat-form-field>
+  <mat-form-field appearance="outline" class="filtro-select">
+    <mat-label>Tipo de documento</mat-label>
+    <mat-select value="" (selectionChange)="cambiar({ tipoDocumento: $event.value })">
+      <mat-option value="">Todos</mat-option>
+      @for (t of tipos; track t) {
+        <mat-option [value]="t">{{ t }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
 </div>
 
-<div class="tabla">
-    <table mat-table [dataSource]="resultado()?.content ?? []">
-        <!-- Documento -->
-        <ng-container matColumnDef="documento">
-            <th mat-header-cell *matHeaderCellDef>Documento</th>
-            <td mat-cell *matCellDef="let a">{{ a.tipoDocumento }} {{ a.numeroDocumento }}</td>
-        </ng-container>
+<div class="contenedor-tabla">
+  <table mat-table [dataSource]="resultado()?.content ?? []">
+    <!-- Documento -->
+    <ng-container matColumnDef="documento">
+      <th mat-header-cell *matHeaderCellDef>Documento</th>
+      <td mat-cell *matCellDef="let a" class="col-documento">
+        <span class="tipo-doc">{{ a.tipoDocumento }}</span> {{ a.numeroDocumento }}
+      </td>
+    </ng-container>
 
-        <!-- Apoderado -->
-        <ng-container matColumnDef="nombre">
-            <th mat-header-cell *matHeaderCellDef>Apoderado</th>
-            <td mat-cell *matCellDef="let a">{{ a.apellidos }}, {{ a.nombres }}</td>
-        </ng-container>
+    <!-- Apoderado -->
+    <ng-container matColumnDef="nombre">
+      <th mat-header-cell *matHeaderCellDef>Apoderado</th>
+      <td mat-cell *matCellDef="let a" class="col-nombre">
+        {{ a.apellidos }}, {{ a.nombres }}
+      </td>
+    </ng-container>
 
-        <!-- Teléfono -->
-        <ng-container matColumnDef="telefono">
-            <th mat-header-cell *matHeaderCellDef>Teléfono</th>
-            <td mat-cell *matCellDef="let a">{{ a.telefono ?? '—' }}</td>
-        </ng-container>
+    <!-- Teléfono -->
+    <ng-container matColumnDef="telefono">
+      <th mat-header-cell *matHeaderCellDef>Teléfono</th>
+      <td mat-cell *matCellDef="let a">
+        @if (a.telefono) {
+          <span class="dato-contacto">
+            <mat-icon class="icono-contacto">call</mat-icon>
+            {{ a.telefono }}
+          </span>
+        } @else {
+          <span class="sin-dato">—</span>
+        }
+      </td>
+    </ng-container>
 
-        <!-- Correo -->
-        <ng-container matColumnDef="correo">
-            <th mat-header-cell *matHeaderCellDef>Correo</th>
-            <td mat-cell *matCellDef="let a">{{ a.correo || '—' }}</td>
-        </ng-container>
+    <!-- Correo -->
+    <ng-container matColumnDef="correo">
+      <th mat-header-cell *matHeaderCellDef>Correo electrónico</th>
+      <td mat-cell *matCellDef="let a">
+        @if (a.correo) {
+          <span class="dato-contacto">
+            <mat-icon class="icono-contacto">mail</mat-icon>
+            {{ a.correo }}
+          </span>
+        } @else {
+          <span class="sin-dato">—</span>
+        }
+      </td>
+    </ng-container>
 
-        <!-- Acciones con Editar y Eliminar -->
-        <ng-container matColumnDef="acciones">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let a">
-                @if (puedeEditar) {
-                    <button mat-icon-button title="Editar contacto" (click)="abrirForm(a)">
-                        <mat-icon>edit</mat-icon>
-                    </button>
-                    <button mat-icon-button color="warn" title="Eliminar apoderado" (click)="eliminar(a)">
-                        <mat-icon>delete</mat-icon>
-                    </button>
-                }
-            </td>
-        </ng-container>
+    <!-- Acciones -->
+    <ng-container matColumnDef="acciones">
+      <th mat-header-cell *matHeaderCellDef class="col-acciones"></th>
+      <td mat-cell *matCellDef="let a" class="col-acciones">
+        @if (puedeEditar) {
+          <button mat-icon-button class="btn-accion" matTooltip="Editar contacto" (click)="abrirForm(a)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button class="btn-accion" color="warn" matTooltip="Eliminar apoderado" (click)="eliminar(a)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+      </td>
+    </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="columnas"></tr>
-        <tr mat-row *matRowDef="let fila; columns: columnas"></tr>
-        <tr class="mat-row" *matNoDataRow>
-            <td class="vacio" [attr.colspan]="columnas.length">
-                {{ resultado() ? 'Sin resultados' : 'Cargando…' }}
-            </td>
-        </tr>
-    </table>
-</div>
+    <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+    <tr mat-row *matRowDef="let fila; columns: columnas"></tr>
+    <tr class="mat-row" *matNoDataRow>
+      <td class="vacio" [attr.colspan]="columnas.length">
+        {{ resultado() ? 'No se encontraron apoderados registrados.' : 'Cargando directorio…' }}
+      </td>
+    </tr>
+  </table>
 
-<mat-paginator 
-    [length]="resultado()?.totalElements ?? 0" 
-    [pageSize]="filtro().size" 
+  <mat-paginator
+    [length]="resultado()?.totalElements ?? 0"
+    [pageSize]="filtro().size"
     [pageIndex]="filtro().page"
-    [pageSizeOptions]="[5, 10, 25]" 
-    (page)="paginar($event)" 
-/>
+    [pageSizeOptions]="[5, 10, 25]"
+    (page)="paginar($event)"
+  />
+</div>

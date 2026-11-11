@@ -1,39 +1,50 @@
-<div class="cab">
-  <h2>Incidencias</h2>
+<header class="cabecera">
+  <div class="titulos">
+    <h2>Registro de Incidencias</h2>
+    <p class="subtitulo">
+      Gestión, seguimiento y Libro Oficial de Incidencias de convivencia escolar (D.S. N.° 004-2018-MINEDU).
+    </p>
+  </div>
+  
   <span class="espacio"></span>
 
-  @if (esAdmin) {
-    <button
-      mat-stroked-button
-      [disabled]="exportandoLibro()"
-      [matMenuTriggerFor]="menuExportarLibro"
-      matTooltip="Descargar Libro Oficial de Incidencias (D.S. N.° 004-2018-MINEDU)"
-    >
-      <mat-icon>{{ exportandoLibro() ? 'hourglass_top' : 'menu_book' }}</mat-icon>
-      {{ exportandoLibro() ? 'Generando...' : 'Libro de Incidencias' }}
-      <mat-icon>arrow_drop_down</mat-icon>
-    </button>
-
-    <mat-menu #menuExportarLibro="matMenu">
-      <button mat-menu-item (click)="exportarLibro('PDF')">
-        <mat-icon color="warn">picture_as_pdf</mat-icon>
-        <span>Libro en PDF</span>
+  <div class="acciones-cabecera">
+    @if (esAdmin) {
+      <button
+        mat-stroked-button
+        [disabled]="exportandoLibro()"
+        [matMenuTriggerFor]="menuExportarLibro"
+        matTooltip="Descargar Libro Oficial de Incidencias"
+      >
+        <mat-icon>{{ exportandoLibro() ? 'hourglass_top' : 'menu_book' }}</mat-icon>
+        {{ exportandoLibro() ? 'Generando...' : 'Libro de Incidencias' }}
+        <mat-icon>arrow_drop_down</mat-icon>
       </button>
-      <button mat-menu-item (click)="exportarLibro('EXCEL')">
-        <mat-icon style="color: #2e7d32;">table_view</mat-icon>
-        <span>Libro en Excel (.xlsx)</span>
-      </button>
-    </mat-menu>
-  }
 
-  @if (puedeEditar) {
-    <a mat-flat-button routerLink="/incidencias/nueva"><mat-icon>add</mat-icon> Registrar incidencia</a>
-  }
-</div>
+      <mat-menu #menuExportarLibro="matMenu">
+        <button mat-menu-item (click)="exportarLibro('PDF')">
+          <mat-icon color="warn">picture_as_pdf</mat-icon>
+          <span>Libro en PDF</span>
+        </button>
+        <button mat-menu-item (click)="exportarLibro('EXCEL')">
+          <mat-icon style="color: #2e7d32;">table_view</mat-icon>
+          <span>Libro en Excel (.xlsx)</span>
+        </button>
+      </mat-menu>
+    }
+
+    @if (puedeEditar) {
+      <a mat-flat-button color="primary" routerLink="/incidencias/nueva">
+        <mat-icon>add</mat-icon> Registrar incidencia
+      </a>
+    }
+  </div>
+</header>
+
 <div class="filtros">
   <mat-form-field appearance="outline" class="buscar">
     <mat-label>Buscar por código o estudiante</mat-label>
-    <input matInput (input)="cambiar({ texto: $any($event.target).value })" />
+    <input matInput placeholder="Ej. INC-2026-001 o Juan Pérez" (input)="cambiar({ texto: $any($event.target).value })" />
     <mat-icon matSuffix>search</mat-icon>
   </mat-form-field>
 
@@ -41,59 +52,81 @@
     <mat-label>Gravedad</mat-label>
     <mat-select (selectionChange)="cambiar({ gravedad: $event.value })" value="">
       <mat-option value="">Todas</mat-option>
-      @for (g of gravedades; track g) { <mat-option [value]="g">{{ g.replace('_', ' ') }}</mat-option> }
+      @for (g of gravedades; track g) {
+        <mat-option [value]="g">{{ g.replace('_', ' ') }}</mat-option>
+      }
     </mat-select>
   </mat-form-field>
+
   <mat-form-field appearance="outline">
     <mat-label>Estado</mat-label>
     <mat-select (selectionChange)="cambiar({ estado: $event.value })" value="">
       <mat-option value="">Todos</mat-option>
-      @for (e of estados; track e) { <mat-option [value]="e">{{ e.replaceAll('_', ' ') }}</mat-option> }
+      @for (e of estados; track e) {
+        <mat-option [value]="e">{{ e.replaceAll('_', ' ') }}</mat-option>
+      }
     </mat-select>
   </mat-form-field>
 </div>
 
-<div class="tabla">
+<div class="contenedor-tabla">
   <table mat-table [dataSource]="resultado()?.content ?? []">
     <ng-container matColumnDef="codigo">
       <th mat-header-cell *matHeaderCellDef>Código</th>
-      <td mat-cell *matCellDef="let i">{{ i.codigoCaso }}</td>
+      <td mat-cell *matCellDef="let i" class="col-codigo">{{ i.codigoCaso }}</td>
     </ng-container>
+
     <ng-container matColumnDef="fecha">
       <th mat-header-cell *matHeaderCellDef>Fecha</th>
       <td mat-cell *matCellDef="let i">{{ i.fechaOcurrencia | date: 'dd/MM/yyyy HH:mm' }}</td>
     </ng-container>
+
     <ng-container matColumnDef="estudiantes">
       <th mat-header-cell *matHeaderCellDef>Estudiante(s)</th>
-      <td mat-cell *matCellDef="let i">{{ i.estudiantes.length ? i.estudiantes.join(', ') : '—' }}</td>
+      <td mat-cell *matCellDef="let i" class="col-estudiantes">
+        {{ i.estudiantes?.length ? i.estudiantes.join(', ') : '—' }}
+      </td>
     </ng-container>
+
     <ng-container matColumnDef="tipo">
       <th mat-header-cell *matHeaderCellDef>Tipo</th>
       <td mat-cell *matCellDef="let i">{{ i.tipo }}</td>
     </ng-container>
+
     <ng-container matColumnDef="gravedad">
       <th mat-header-cell *matHeaderCellDef>Gravedad</th>
       <td mat-cell *matCellDef="let i"><app-gravedad-chip [valor]="i.gravedad" /></td>
     </ng-container>
+
     <ng-container matColumnDef="estado">
       <th mat-header-cell *matHeaderCellDef>Estado</th>
       <td mat-cell *matCellDef="let i"><app-estado-chip [valor]="i.estado" /></td>
     </ng-container>
+
     <ng-container matColumnDef="responsable">
       <th mat-header-cell *matHeaderCellDef>Responsable</th>
       <td mat-cell *matCellDef="let i">
-        @if (i.responsable) { {{ i.responsable }} } @else { <span class="sin">Sin responsable</span> }
+        @if (i.responsable) {
+          {{ i.responsable }}
+        } @else {
+          <span class="sin">Sin asignar</span>
+        }
       </td>
     </ng-container>
+
     <ng-container matColumnDef="alertas">
       <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let i">@if (i.reincidencia) { <mat-icon class="reinc"
-          title="Reincidencia">warning</mat-icon> }</td>
+      <td mat-cell *matCellDef="let i">
+        @if (i.reincidencia) {
+          <mat-icon class="reinc" matTooltip="Caso con reincidencia">warning</mat-icon>
+        }
+      </td>
     </ng-container>
+
     <ng-container matColumnDef="acciones">
       <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let i">
-        <button mat-icon-button title="Ver detalle" (click)="abrir(i.id)">
+      <td mat-cell *matCellDef="let i" class="col-acciones">
+        <button mat-icon-button class="btn-ver" matTooltip="Ver detalle del caso" (click)="abrir(i.id)">
           <mat-icon>visibility</mat-icon>
         </button>
       </td>
@@ -102,10 +135,17 @@
     <tr mat-header-row *matHeaderRowDef="columnas"></tr>
     <tr mat-row *matRowDef="let fila; columns: columnas"></tr>
     <tr class="mat-row" *matNoDataRow>
-      <td class="vacio" [attr.colspan]="columnas.length">{{ resultado() ? 'Sin resultados' : 'Cargando…' }}</td>
+      <td class="vacio" [attr.colspan]="columnas.length">
+        {{ resultado() ? 'No se encontraron incidencias registradas.' : 'Cargando registros…' }}
+      </td>
     </tr>
   </table>
-</div>
 
-<mat-paginator [length]="resultado()?.totalElements ?? 0" [pageSize]="filtro().tamano" [pageIndex]="filtro().pagina"
-  [pageSizeOptions]="[5, 10, 25]" (page)="paginar($event)" />
+  <mat-paginator
+    [length]="resultado()?.totalElements ?? 0"
+    [pageSize]="filtro().tamano"
+    [pageIndex]="filtro().pagina"
+    [pageSizeOptions]="[5, 10, 25]"
+    (page)="paginar($event)"
+  />
+</div>

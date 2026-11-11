@@ -1,5 +1,14 @@
-<div class="cab">
-    <h2>Gestión de Aulas</h2>
+<header class="cabecera">
+  <div class="titulos">
+    <h2>Gestión de Aulas y Secciones</h2>
+    <p class="subtitulo">
+      Organización de grados, secciones escolares y asignación de docentes tutores por año lectivo.
+    </p>
+  </div>
+
+  <span class="espacio"></span>
+
+  <div class="acciones-cabecera">
     @if (puedeEditar) {
       <button mat-flat-button color="primary" (click)="abrirCrear()">
         <mat-icon>add_business</mat-icon>
@@ -7,150 +16,152 @@
       </button>
     }
   </div>
-  
-  <!-- Filtros de búsqueda idénticos a estudiantes -->
-  <div class="filtros">
-    <mat-form-field appearance="outline" class="buscar">
-      <mat-label>Buscar por grado, sección o tutor</mat-label>
-      <input
-        matInput
-        [value]="filtro().termino"
-        (input)="cambiar({ termino: $any($event.target).value })"
-        placeholder="Ej. 1, A, Vargas..."
-      />
-      <mat-icon matSuffix>search</mat-icon>
-    </mat-form-field>
-  
-    <mat-form-field appearance="outline" class="tipo">
-      <mat-label>Nivel</mat-label>
-      <mat-select [value]="filtro().nivel" (selectionChange)="cambiar({ nivel: $event.value })">
-        <mat-option value="">Todos los niveles</mat-option>
-        @for (n of niveles; track n) {
-          <mat-option [value]="n">{{ n }}</mat-option>
+</header>
+
+<div class="filtros">
+  <mat-form-field appearance="outline" class="buscar">
+    <mat-label>Buscar por grado, sección o docente tutor</mat-label>
+    <input
+      matInput
+      [value]="filtro().termino"
+      (input)="cambiar({ termino: $any($event.target).value })"
+      placeholder="Ej. 1, A, Vargas..."
+    />
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filtro-select">
+    <mat-label>Nivel educativo</mat-label>
+    <mat-select [value]="filtro().nivel" (selectionChange)="cambiar({ nivel: $event.value })">
+      <mat-option value="">Todos los niveles</mat-option>
+      @for (n of niveles; track n) {
+        <mat-option [value]="n">{{ n }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filtro-medio">
+    <mat-label>Año Escolar</mat-label>
+    <input
+      matInput
+      type="number"
+      [value]="filtro().anioEscolar"
+      (input)="cambiar({ anioEscolar: +$any($event.target).value })"
+      min="2000"
+      max="2100"
+    />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filtro-select">
+    <mat-label>Tutoría</mat-label>
+    <mat-select
+      [value]="filtro().soloSinTutor ? 'SIN_TUTOR' : 'TODOS'"
+      (selectionChange)="cambiar({ soloSinTutor: $event.value === 'SIN_TUTOR' })"
+    >
+      <mat-option value="TODOS">Todas las aulas</mat-option>
+      <mat-option value="SIN_TUTOR">Sin tutor (Vacantes)</mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<div class="contenedor-tabla">
+  <table mat-table [dataSource]="resultado().content">
+    
+    <!-- Aula / Sección -->
+    <ng-container matColumnDef="aula">
+      <th mat-header-cell *matHeaderCellDef>Nivel / Aula</th>
+      <td mat-cell *matCellDef="let row" class="col-aula">
+        <span class="aula-badge">
+          {{ row.nivel }} · {{ row.grado }}° "{{ row.seccion }}"
+        </span>
+      </td>
+    </ng-container>
+
+    <!-- Año escolar -->
+    <ng-container matColumnDef="anio">
+      <th mat-header-cell *matHeaderCellDef>Año</th>
+      <td mat-cell *matCellDef="let row" class="col-anio">{{ row.anioEscolar }}</td>
+    </ng-container>
+
+    <!-- Tutor responsable -->
+    <ng-container matColumnDef="tutor">
+      <th mat-header-cell *matHeaderCellDef>Docente Tutor</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.tutorNombreCompleto) {
+          <div class="tutor-info">
+            <span class="tutor-nombre">{{ row.tutorNombreCompleto }}</span>
+            <small class="tutor-dni">DNI: {{ row.tutorDni || '---' }}</small>
+          </div>
+        } @else {
+          <span class="sin-tutor">Sin tutor asignado</span>
         }
-      </mat-select>
-    </mat-form-field>
-  
-    <mat-form-field appearance="outline" class="tipo">
-      <mat-label>Año Escolar</mat-label>
-      <input
-        matInput
-        type="number"
-        [value]="filtro().anioEscolar"
-        (input)="cambiar({ anioEscolar: +$any($event.target).value })"
-        min="2000"
-        max="2100"
-      />
-    </mat-form-field>
-  
-    <mat-form-field appearance="outline" class="tipo">
-      <mat-label>Tutor</mat-label>
-      <mat-select
-        [value]="filtro().soloSinTutor ? 'SIN_TUTOR' : 'TODOS'"
-        (selectionChange)="cambiar({ soloSinTutor: $event.value === 'SIN_TUTOR' })"
-      >
-        <mat-option value="TODOS">Todas las aulas</mat-option>
-        <mat-option value="SIN_TUTOR">Sin tutor (Vacantes)</mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
-  
-  <!-- Contenedor de la tabla -->
-  <div class="tabla">
-    <table mat-table [dataSource]="resultado().content">
-      
-      <!-- Aula / Sección -->
-      <ng-container matColumnDef="aula">
-        <th mat-header-cell *matHeaderCellDef>Nivel / Aula</th>
-        <td mat-cell *matCellDef="let row">
-          <strong>{{ row.nivel }} · {{ row.grado }}° "{{ row.seccion }}"</strong>
-        </td>
-      </ng-container>
-  
-      <!-- Año escolar -->
-      <ng-container matColumnDef="anio">
-        <th mat-header-cell *matHeaderCellDef>Año</th>
-        <td mat-cell *matCellDef="let row">{{ row.anioEscolar }}</td>
-      </ng-container>
-  
-      <!-- Tutor responsable -->
-      <ng-container matColumnDef="tutor">
-        <th mat-header-cell *matHeaderCellDef>Docente Tutor</th>
-        <td mat-cell *matCellDef="let row">
-          @if (row.tutorNombreCompleto) {
-            <div>
-              <div>{{ row.tutorNombreCompleto }}</div>
-              <small class="ayuda">DNI: {{ row.tutorDni || '---' }}</small>
-            </div>
-          } @else {
-            <span class="sin-tutor">Sin tutor asignado</span>
-          }
-        </td>
-      </ng-container>
-  
-      <!-- Estado (usa .est y .est.off) -->
-      <ng-container matColumnDef="estado">
-        <th mat-header-cell *matHeaderCellDef>Estado</th>
-        <td mat-cell *matCellDef="let row">
-          <span class="est" [class.off]="!row.activo">
-            {{ row.activo ? 'Activa' : 'Inactiva' }}
-          </span>
-        </td>
-      </ng-container>
-  
-      <!-- Acciones -->
-      <ng-container matColumnDef="acciones">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let row">
-          @if (puedeEditar) {
-            <!-- Asignar / Cambiar Tutor -->
+      </td>
+    </ng-container>
+
+    <!-- Estado -->
+    <ng-container matColumnDef="estado">
+      <th mat-header-cell *matHeaderCellDef>Estado</th>
+      <td mat-cell *matCellDef="let row">
+        <span class="chip-estado" [class.inactivo]="!row.activo">
+          {{ row.activo ? 'Activa' : 'Inactiva' }}
+        </span>
+      </td>
+    </ng-container>
+
+    <!-- Acciones -->
+    <ng-container matColumnDef="acciones">
+      <th mat-header-cell *matHeaderCellDef class="col-acciones"></th>
+      <td mat-cell *matCellDef="let row" class="col-acciones">
+        @if (puedeEditar) {
+          <!-- Asignar / Cambiar Tutor -->
+          <button
+            mat-icon-button
+            class="btn-accion"
+            color="primary"
+            matTooltip="Asignar o cambiar docente tutor"
+            (click)="asignarTutor(row)"
+          >
+            <mat-icon>person_add</mat-icon>
+          </button>
+
+          <!-- Desasignar Tutor -->
+          @if (row.tutorId) {
             <button
               mat-icon-button
-              color="primary"
-              matTooltip="Asignar o cambiar tutor"
-              (click)="asignarTutor(row)"
+              class="btn-accion"
+              color="warn"
+              matTooltip="Remover tutor actual"
+              (click)="desasignarTutor(row)"
             >
-              <mat-icon>person_add</mat-icon>
-            </button>
-  
-            <!-- Desasignar Tutor -->
-            @if (row.tutorId) {
-              <button
-                mat-icon-button
-                color="warn"
-                matTooltip="Remover tutor actual"
-                (click)="desasignarTutor(row)"
-              >
-                <mat-icon>person_remove</mat-icon>
-              </button>
-            }
-  
-            <!-- Desactivar / Reactivar Aula -->
-            <button
-              mat-icon-button
-              (click)="alternarEstado(row)"
-              [matTooltip]="row.activo ? 'Desactivar aula' : 'Reactivar aula'"
-            >
-              <mat-icon [color]="row.activo ? 'warn' : 'primary'">
-                {{ row.activo ? 'block' : 'check_circle' }}
-              </mat-icon>
+              <mat-icon>person_remove</mat-icon>
             </button>
           }
-        </td>
-      </ng-container>
-  
-      <tr mat-header-row *matHeaderRowDef="columnas"></tr>
-      <tr mat-row *matRowDef="let row; columns: columnas"></tr>
-  
-      <!-- Sin datos (usa .vacio) -->
-      <tr class="mat-row" *matNoDataRow>
-        <td class="vacio" [attr.colspan]="columnas.length">
-          {{ resultado() ? 'No se encontraron aulas' : 'Cargando aulas…' }}
-        </td>
-      </tr>
-    </table>
-  </div>
-  
+
+          <!-- Desactivar / Reactivar Aula -->
+          <button
+            mat-icon-button
+            class="btn-accion"
+            (click)="alternarEstado(row)"
+            [matTooltip]="row.activo ? 'Desactivar aula' : 'Reactivar aula'"
+          >
+            <mat-icon [color]="row.activo ? 'warn' : 'primary'">
+              {{ row.activo ? 'block' : 'check_circle' }}
+            </mat-icon>
+          </button>
+        }
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+    <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="vacio" [attr.colspan]="columnas.length">
+        {{ resultado() ? 'No se encontraron aulas con los filtros aplicados.' : 'Cargando aulas…' }}
+      </td>
+    </tr>
+  </table>
+
   <mat-paginator
     [length]="resultado().totalElements"
     [pageSize]="filtro().size"
@@ -158,3 +169,4 @@
     [pageSizeOptions]="[5, 10, 25]"
     (page)="paginar($event)"
   />
+</div>

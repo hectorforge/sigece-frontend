@@ -1,79 +1,142 @@
-.cab {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* Cabecera Estandarizada */
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
+.titulos h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.subtitulo {
+  margin: 4px 0 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.espacio {
+  flex: 1 1 auto;
+}
+
+.acciones-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Filtros */
 .filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .filtros .buscar {
-    flex: 1 1 280px;
-    min-width: 240px;
+  flex: 1 1 300px;
+  min-width: 240px;
+  max-width: 450px;
 }
 
-.filtros .tipo {
-    flex: 0 0 180px;
+.filtros .filtro-select {
+  flex: 0 0 170px;
 }
 
-.filtros .medio {
-    flex: 0 0 130px;
+.filtros .filtro-medio {
+  flex: 0 0 130px;
 }
 
-.filtros .corto {
-    flex: 0 0 95px;
+.filtros .filtro-corto {
+  flex: 0 0 100px;
 }
 
 .btn-limpiar {
-    height: 48px;
-    margin-bottom: 22px; /* Alineación con el baseline de mat-form-field */
+  height: 52px;
+  margin-bottom: 22px; /* Alineación vertical con los mat-form-field */
 }
 
-.tabla {
-    overflow-x: auto;
-    background: var(--mat-sys-surface);
-    border-radius: 12px;
+/* Contenedor de Tabla */
+.contenedor-tabla {
+  background: var(--mat-sys-surface, #ffffff);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.est {
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    background: #2e7d32;
-    color: #fff;
-    display: inline-block;
+table {
+  width: 100%;
 }
 
-.est.off {
-    background: #757575;
+.col-codigo {
+  font-weight: 600;
+  color: var(--mat-sys-primary, #1e40af);
+}
+
+.col-estudiante {
+  font-weight: 500;
+  color: #1e293b;
 }
 
 .aula-badge {
-    font-size: 13px;
-    color: var(--mat-sys-on-surface);
+  font-size: 13px;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
+  border: 1px solid #e2e8f0;
 }
 
-.acciones-cell {
-    white-space: nowrap;
-    text-align: right;
+/* Chip de Estado */
+.chip-estado {
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #dcfce7;
+  color: #15803d;
+  display: inline-block;
 }
 
+.chip-estado.inactivo {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* Columna de Acciones */
+.col-acciones {
+  white-space: nowrap;
+  text-align: right;
+  padding-right: 16px;
+}
+
+.btn-accion {
+  color: #475569;
+  transition: all 0.2s ease;
+}
+
+.btn-accion:hover {
+  background: #f1f5f9;
+}
+
+/* Fila vacía */
 .vacio {
-    text-align: center;
-    padding: 24px;
-}
-
-.ayuda {
-    font-size: 13px;
-    opacity: .7;
-    margin: 0 0 12px;
+  text-align: center;
+  padding: 36px 16px;
+  color: #64748b;
+  font-size: 14px;
 }
 
 mat-paginator {
-    margin-top: 12px;
-    margin-bottom: 30px;
+  border-top: 1px solid #f1f5f9;
 }
