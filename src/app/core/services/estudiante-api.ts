@@ -8,6 +8,7 @@ import {
   Estudiante,
   EstudianteFiltro,
   EstudianteRequest,
+  EstudianteResumen,
   PerfilEstudiante,
 } from '../models/estudiante.models';
 
@@ -178,5 +179,17 @@ export class EstudianteApi {
     return this.http
       .get<ApiResponse<number>>(`${this.base}/${id}/incidentes/conteo`)
       .pipe(map((r) => r.data ?? 0));
+  }
+
+  /**
+   * GET /api/v1/estudiantes/autocompletar?termino={termino}
+   * Busca una lista reducida de hasta 5 estudiantes para campos de autocompletado.
+   */
+  autocompletar(termino: string): Observable<EstudianteResumen[]> {
+    const params = new HttpParams().set('termino', termino.trim());
+
+    return this.http
+      .get<ApiResponse<EstudianteResumen[]>>(`${this.base}/autocompletar`, { params })
+      .pipe(map((r) => r.data ?? []));
   }
 }

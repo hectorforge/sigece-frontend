@@ -7,10 +7,10 @@
             <mat-autocomplete #auto="matAutocomplete" [displayWith]="mostrar"
                 (optionSelected)="seleccionado = $event.option.value">
                 @for (e of resultados(); track e.id) {
-                <mat-option [value]="e">{{ e.apellidos }}, {{ e.nombres }} · {{ e.grado }} {{ e.seccion }}</mat-option>
+                <mat-option [value]="e">{{ e.apellidos }}, {{ e.nombres }} · SIAGIE: {{ e.codigoSiagie }}</mat-option>
                 }
             </mat-autocomplete>
-            <mat-hint>Escribe al menos 2 letras del nombre o el código SIAGIE</mat-hint>
+            <mat-hint>Escribe al menos 2 letras del nombre, apellido o el código SIAGIE</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline">

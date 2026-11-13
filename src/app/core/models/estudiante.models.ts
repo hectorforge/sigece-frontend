@@ -9,6 +9,13 @@ export interface EstudianteRequest {
   aulaId: number;          
 }
 
+export interface EstudianteResumen {
+  id: number;
+  codigoSiagie: string;
+  nombres: string;
+  apellidos: string;
+}
+
 export interface Estudiante {
   id: number;
   codigoSiagie: string;

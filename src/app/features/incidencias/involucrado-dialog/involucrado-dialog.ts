@@ -7,10 +7,10 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { debounceTime, filter, map, switchMap } from 'rxjs';
+import { debounceTime, filter, switchMap } from 'rxjs';
 import { InvolucradoRequest } from '../../../core/models/incidente.models';
 import { EstudianteApi } from '../../../core/services/estudiante-api';
-import { Estudiante } from '../../../core/models/estudiante.models';
+import { EstudianteResumen } from '../../../core/models/estudiante.models';
 
 @Component({
   selector: 'app-involucrado-dialog',
@@ -25,10 +25,10 @@ export class InvolucradoDialog {
   private ref = inject(MatDialogRef<InvolucradoDialog>);
   private estudiantesApi = inject(EstudianteApi);
 
-  seleccionado: Estudiante | null = null;
+  seleccionado: EstudianteResumen | null = null;
 
   form = new FormGroup({
-    estudiante: new FormControl<string | Estudiante>('', Validators.required),
+    estudiante: new FormControl<string | EstudianteResumen>('', Validators.required),
     rolInvolucrado: new FormControl<'VICTIMA' | 'AGRESOR' | 'TESTIGO'>('VICTIMA', { nonNullable: true }),
     observaciones: new FormControl(''),
   });
@@ -37,13 +37,9 @@ export class InvolucradoDialog {
     this.form.controls.estudiante.valueChanges.pipe(
       debounceTime(300),
       filter((v): v is string => typeof v === 'string' && v.trim().length >= 2),
-      // <- ajusta el nombre del método y los campos del filtro a tu servicio
-      switchMap((v) =>
-        this.estudiantesApi.buscar({ termino: v.trim(), nivel: '', grado: '', seccion: '', activo: true, page: 0, size: 8 }),
-      ),
-      map((p) => p.content),
+      switchMap((v) => this.estudiantesApi.autocompletar(v.trim())),
     ),
-    { initialValue: [] as Estudiante[] },
+    { initialValue: [] as EstudianteResumen[] },
   );
 
   constructor() {
@@ -55,7 +51,8 @@ export class InvolucradoDialog {
       });
   }
 
-  mostrar = (e: string | Estudiante | null) => (e && typeof e !== 'string' ? `${e.apellidos}, ${e.nombres}` : '');
+  mostrar = (e: string | EstudianteResumen | null) => 
+    e && typeof e !== 'string' ? `${e.apellidos}, ${e.nombres} (${e.codigoSiagie})` : '';
 
   guardar() {
     if (!this.seleccionado) return;

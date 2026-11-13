@@ -32,22 +32,72 @@
   flex-wrap: wrap;
 }
 
-/* Filtros */
+/* Filtros Alineados */
 .filtros {
   display: flex;
   flex-wrap: wrap;
+  align-items: center; /* Alinea perfectamente al centro todos los controles */
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .filtros .buscar {
-  flex: 1 1 320px;
+  flex: 1 1 300px;
   min-width: 240px;
   max-width: 450px;
 }
 
 .filtros mat-form-field {
-  min-width: 170px;
+  flex: 1 1 140px;
+  min-width: 140px;
+}
+
+/* Cápsula integrada para filtrar por año */
+.control-anio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px; /* Altura estándar de mat-form-field */
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.38);
+  background: var(--mat-sys-surface, #ffffff);
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.control-anio.activo {
+  border-color: var(--mat-sys-primary, #1e40af);
+  background-color: #f8faff;
+}
+
+/* Input numérico de año integrado */
+.campo-anio {
+  width: 70px;
+  height: 36px;
+  padding: 0 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  background: #ffffff;
+  outline: none;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.campo-anio:focus {
+  border-color: var(--mat-sys-primary, #1e40af);
+  box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.15);
+}
+
+.campo-anio:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
 }
 
 /* Contenedor de Tabla */

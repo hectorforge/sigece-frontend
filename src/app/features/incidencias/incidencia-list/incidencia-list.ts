@@ -3,6 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -31,6 +32,7 @@ import { Auth } from '../../../core/auth/auth';
 
 @Component({
   selector: 'app-incidencia-list',
+  standalone: true,
   imports: [
     DatePipe,
     RouterLink,
@@ -39,6 +41,7 @@ import { Auth } from '../../../core/auth/auth';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatCheckboxModule,
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
@@ -68,7 +71,20 @@ export class IncidenciaList {
   readonly esAdmin = this.auth.tieneRol(['ROLE_ADMINISTRADOR']);
   readonly exportandoLibro = signal(false);
 
-  filtro = signal<IncidenteFiltro>({ texto: '', gravedad: '', estado: '', pagina: 0, tamano: 10 });
+  // Control de filtro por año
+  readonly filtrarPorAnio = signal<boolean>(true);
+  readonly anioFiltro = signal<number>(2026);
+
+  filtro = signal<IncidenteFiltro>({ 
+    texto: '', 
+    gravedad: '', 
+    estado: '', 
+    fechaDesde: '2026-01-01',
+    fechaHasta: '2026-12-31',
+    pagina: 0, 
+    tamano: 10 
+  });
+  
   resultado = toSignal(
     toObservable(this.filtro).pipe(
       debounceTime(300),
@@ -80,6 +96,26 @@ export class IncidenciaList {
 
   cambiar(parcial: Partial<IncidenteFiltro>) {
     this.filtro.update(f => ({ ...f, ...parcial, pagina: 0 }));
+  }
+
+  toggleFiltroAnio(activo: boolean) {
+    this.filtrarPorAnio.set(activo);
+    if (activo) {
+      const anio = this.anioFiltro();
+      this.cambiar({ fechaDesde: `${anio}-01-01`, fechaHasta: `${anio}-12-31` });
+    } else {
+      this.cambiar({ fechaDesde: '', fechaHasta: '' });
+    }
+  }
+
+  cambiarAnio(valor: any) {
+    const anio = parseInt(valor, 10);
+    if (!isNaN(anio) && anio >= 2000 && anio <= 2100) {
+      this.anioFiltro.set(anio);
+      if (this.filtrarPorAnio()) {
+        this.cambiar({ fechaDesde: `${anio}-01-01`, fechaHasta: `${anio}-12-31` });
+      }
+    }
   }
 
   paginar(e: PageEvent) {
